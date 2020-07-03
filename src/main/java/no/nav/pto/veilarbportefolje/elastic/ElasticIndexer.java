@@ -50,8 +50,7 @@ import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static no.nav.json.JsonUtils.toJson;
-import static no.nav.pto.veilarbportefolje.elastic.ElasticUtils.createIndexName;
-import static no.nav.pto.veilarbportefolje.elastic.ElasticUtils.getAlias;
+import static no.nav.pto.veilarbportefolje.elastic.ElasticUtils.*;
 import static no.nav.pto.veilarbportefolje.elastic.IndekseringUtils.finnBruker;
 import static no.nav.pto.veilarbportefolje.feed.aktivitet.AktivitetUtils.filtrerBrukertiltak;
 import static no.nav.pto.veilarbportefolje.util.UnderOppfolgingRegler.erUnderOppfolging;
@@ -436,9 +435,16 @@ public class ElasticIndexer {
     public void skrivTilIndeks(String indeksNavn, List<OppfolgingsBruker> oppfolgingsBrukere) {
 
         BulkRequest bulk = new BulkRequest();
-        oppfolgingsBrukere.stream()
-                .map(bruker -> new IndexRequest(indeksNavn, "_doc", bruker.getFnr()).source(toJson(bruker), XContentType.JSON))
-                .forEach(bulk::add);
+
+        if (unleashService.isEnabled("portefolje_upsert")) {
+            oppfolgingsBrukere.stream()
+                    .map(bruker -> creatUpdateRequest(getAlias(), Fnr.of(bruker.getFnr()), toJson(bruker)))
+                    .forEach(bulk::add);
+        } else {
+            oppfolgingsBrukere.stream()
+                    .map(bruker -> new IndexRequest(indeksNavn, "_doc", bruker.getFnr()).source(toJson(bruker), XContentType.JSON))
+                    .forEach(bulk::add);
+        }
 
         BulkResponse response = client.bulk(bulk, DEFAULT);
 

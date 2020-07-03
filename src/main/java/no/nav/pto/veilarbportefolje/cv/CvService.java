@@ -71,12 +71,12 @@ public class CvService implements KafkaConsumerService<String> {
             case SAMTYKKE_OPPRETTET:
                 log.info("Bruker {} har delt cv med nav", aktorId);
                 createEvent("portefolje_har_delt_cv").report();
-                elasticServiceV2.updateHarDeltCv(fnr, true);
+                elasticServiceV2.upsert(fnr, true);
                 break;
             case SAMTYKKE_SLETTET:
                 log.info("Bruker {} har ikke delt cv med nav", aktorId);
                 createEvent("portefolje_har_ikke_delt_cv").report();
-                elasticServiceV2.updateHarDeltCv(fnr, false);
+                elasticServiceV2.upsert(fnr, false);
                 break;
             default:
                 log.info("Ignorer melding av type {} for bruker {}", melding.getMeldingType(), aktorId);

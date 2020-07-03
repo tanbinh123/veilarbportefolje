@@ -151,7 +151,7 @@ public class CvServiceTest extends IntegrationTest {
     }
 
     @Test
-    public void skal_ignorere_tilfeller_hvor_dokumentet_ikke_finnes_i_elastic() {
+    public void skal_opprette_dokument_om_det_ikke_finnes_i_elastic() {
         Fnr fnr = Fnr.of("00000000000");
         String payload = new JSONObject()
                 .put("aktoerId", "00000000000")
@@ -163,7 +163,7 @@ public class CvServiceTest extends IntegrationTest {
         cvService.behandleKafkaMelding(payload);
 
         GetResponse getResponse = fetchDocument(indexName, fnr);
-        assertThat(getResponse.isExists()).isFalse();
+        assertThat(getResponse.isExists()).isTrue();
     }
 
 }

@@ -1,6 +1,7 @@
 package no.nav.pto.veilarbportefolje.elastic;
 
 import lombok.extern.slf4j.Slf4j;
+import no.nav.pto.veilarbportefolje.domene.Fnr;
 import no.nav.pto.veilarbportefolje.elastic.domene.CountResponse;
 import no.nav.pto.veilarbportefolje.elastic.domene.ElasticClientConfig;
 import no.nav.sbl.rest.RestUtils;
@@ -11,9 +12,11 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.xcontent.XContentType;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +34,16 @@ public class ElasticUtils {
 
     private static int SOCKET_TIMEOUT = 120_000;
     private static int CONNECT_TIMEOUT = 60_000;
+
+    public static UpdateRequest creatUpdateRequest(String indexName, Fnr fnr, String json) {
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.index(indexName);
+        updateRequest.type("_doc");
+        updateRequest.id(fnr.getFnr());
+        updateRequest.docAsUpsert(true);
+        updateRequest.doc(json, XContentType.JSON);
+        return updateRequest;
+    }
 
     public static RestHighLevelClient createClient(ElasticClientConfig config) {
         HttpHost httpHost = new HttpHost(
