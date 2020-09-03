@@ -5,6 +5,7 @@ import no.nav.common.metrics.MetricsClient;
 import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetService;
 import no.nav.pto.veilarbportefolje.cv.CvService;
 import no.nav.pto.veilarbportefolje.dialog.DialogService;
+import no.nav.pto.veilarbportefolje.oppfolging.OppfolgingAvsluttetService;
 import no.nav.pto.veilarbportefolje.profilering.ProfileringService;
 import no.nav.pto.veilarbportefolje.registrering.RegistreringService;
 import no.nav.pto.veilarbportefolje.util.KafkaProperties;
@@ -24,7 +25,12 @@ public class KafkaConfig {
         KAFKA_REGISTRERING_CONSUMER_TOPIC("aapen-arbeid-arbeidssoker-registrert-" + requireKafkaTopicPostfix()),
         KAFKA_AKTIVITER_CONSUMER_TOPIC("aapen-fo-endringPaaAktivitet-v1-" + requireKafkaTopicPostfix()),
         PAM_SAMTYKKE_ENDRET_V1("aapen-pam-samtykke-endret-v1"),
-        KAFKA_PROFILERING_CONSUMER_TOPIC("aapen-arbeid-arbeidssoker-profilert-" + requireKafkaTopicPostfix());
+        KAFKA_PROFILERING_CONSUMER_TOPIC("aapen-arbeid-arbeidssoker-profilert-" + requireKafkaTopicPostfix()),
+        ENDRING_PAA_MANUELL_STATUS("aapen-arbeidsrettetOppfolging-endringPaManuellStatus-v1-" + requireKafkaTopicPostfix()),
+        VEILEDER_TILORDNET("aapen-arbeidsrettetOppfolging-veilederTilordnet-v1-" + requireKafkaTopicPostfix()),
+        ENDRING_PAA_NY_FOR_VEILEDER("aapen-arbeidsrettetOppfolging-endringPaNyForVeileder-v1-" + requireKafkaTopicPostfix()),
+        OPPFOLGING_STARTET("aapen-arbeidsrettetOppfolging-oppfolgingStartet-v1-" + requireKafkaTopicPostfix()),
+        OPPFOLGING_AVSLUTTET("aapen-arbeidsrettetOppfolging-oppfolgingAvsluttet-v1-" + requireKafkaTopicPostfix());
 
         final String topic;
 
@@ -92,6 +98,18 @@ public class KafkaConfig {
                 KafkaProperties.kafkaProperties(),
                 KafkaConfig.Topic.PAM_SAMTYKKE_ENDRET_V1,
                 metricsClient);
+    }
+
+    @Bean
+    public KafkaConsumerRunnable kafkaOppfolgingAvsluttet(OppfolgingAvsluttetService oppfolgingAvsluttetService, UnleashService unleashService, MetricsClient metricsClient) {
+        return new KafkaConsumerRunnable<>(
+                oppfolgingAvsluttetService,
+                unleashService,
+                KafkaProperties.kafkaProperties(),
+                KafkaConfig.Topic.OPPFOLGING_AVSLUTTET,
+                metricsClient
+        );
+
     }
 
     public static String requireKafkaTopicPostfix() {

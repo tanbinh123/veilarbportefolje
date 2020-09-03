@@ -21,7 +21,7 @@ import static no.nav.pto.veilarbportefolje.TestUtil.createUnleashMock;
 import static no.nav.pto.veilarbportefolje.kafka.KafkaConfig.Topic.KAFKA_AKTIVITER_CONSUMER_TOPIC;
 import static org.mockito.Mockito.mock;
 
-public class DialogKafkaConsumerTest extends IntegrationTest {
+public class DialogKafkaConsumerTest extends EndToEndTest {
 
     private static DialogService dialogService;
     private static JdbcTemplate jdbcTemplate;

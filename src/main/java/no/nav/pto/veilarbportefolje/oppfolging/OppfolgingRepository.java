@@ -26,6 +26,13 @@ public class OppfolgingRepository {
         this.db = db;
     }
 
+    public void avsluttOppfolging(AktoerId aktoerId) {
+        SqlUtils.upsert(db, "OPPFOLGING_DATA")
+                .set("OPPFOLGING", "N")
+                .where(WhereClause.equals("AKTOERID", aktoerId.toString()))
+                .execute();
+    }
+
     public void oppdaterOppfolgingData(BrukerOppdatertInformasjon info) {
         SqlUtils.upsert(db, "OPPFOLGING_DATA")
                 .set("VEILEDERIDENT", info.getVeileder())

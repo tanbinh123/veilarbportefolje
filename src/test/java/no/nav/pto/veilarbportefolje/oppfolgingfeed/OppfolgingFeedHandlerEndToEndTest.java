@@ -36,7 +36,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class OppfolgingFeedHandlerIntegrationTest {
+public class OppfolgingFeedHandlerEndToEndTest {
 
     private static OppfolgingFeedHandler oppfolgingFeedHandler;
     private static ArbeidslisteService arbeidslisteService;
@@ -54,7 +54,7 @@ public class OppfolgingFeedHandlerIntegrationTest {
         NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(ds);
 
         BrukerRepository brukerRepository = new BrukerRepository(jdbcTemplate, namedParameterJdbcTemplate);
-        ArbeidslisteRepository arbeidslisteRepository = new ArbeidslisteRepository(jdbcTemplate, namedParameterJdbcTemplate);
+        ArbeidslisteRepository arbeidslisteRepository = new ArbeidslisteRepository(jdbcTemplate);
 
         BrukerService brukerService = new BrukerService(brukerRepository, aktorregisterClientMock);
 

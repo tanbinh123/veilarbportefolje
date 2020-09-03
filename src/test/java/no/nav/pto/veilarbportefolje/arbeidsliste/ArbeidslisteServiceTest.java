@@ -40,7 +40,7 @@ public class ArbeidslisteServiceTest {
         jdbcTemplate = new JdbcTemplate(ds);
         NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(ds);
 
-        ArbeidslisteRepository arbeidslisteRepository = new ArbeidslisteRepository(jdbcTemplate, namedParameterJdbcTemplate);
+        ArbeidslisteRepository arbeidslisteRepository = new ArbeidslisteRepository(jdbcTemplate);
         BrukerRepository brukerRepository = new BrukerRepository(jdbcTemplate, namedParameterJdbcTemplate);
 
         aktorregisterClientMock = mock(AktorregisterClient.class);

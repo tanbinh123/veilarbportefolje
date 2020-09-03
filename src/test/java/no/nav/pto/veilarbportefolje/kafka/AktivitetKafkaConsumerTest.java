@@ -39,7 +39,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class AktivitetKafkaConsumerTest extends IntegrationTest {
+public class AktivitetKafkaConsumerTest extends EndToEndTest {
 
     private static AktivitetService aktivitetService;
     private static AktivitetDAO aktivitetDAO;

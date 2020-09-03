@@ -5,7 +5,7 @@ import no.nav.pto.veilarbportefolje.TestUtil;
 import no.nav.pto.veilarbportefolje.domene.AktoerId;
 import no.nav.pto.veilarbportefolje.domene.Fnr;
 import no.nav.pto.veilarbportefolje.elastic.ElasticServiceV2;
-import no.nav.pto.veilarbportefolje.kafka.IntegrationTest;
+import no.nav.pto.veilarbportefolje.kafka.EndToEndTest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.json.JSONObject;
@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class CvServiceTest extends IntegrationTest {
+public class CvServiceTest extends EndToEndTest {
     private static JdbcTemplate jdbcTemplate;
     private static CvRepository cvRepository;
 

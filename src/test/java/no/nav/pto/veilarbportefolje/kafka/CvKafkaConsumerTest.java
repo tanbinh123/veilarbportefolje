@@ -18,7 +18,7 @@ import static no.nav.pto.veilarbportefolje.kafka.KafkaConfig.Topic.PAM_SAMTYKKE_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-public class CvKafkaConsumerTest extends IntegrationTest {
+public class CvKafkaConsumerTest extends EndToEndTest {
     private static CvService cvService;
     private static String indexName;
 

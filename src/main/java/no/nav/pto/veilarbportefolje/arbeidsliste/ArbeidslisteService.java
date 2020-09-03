@@ -83,6 +83,11 @@ public class ArbeidslisteService {
                 .onSuccess(elasticIndexer::indekser);
     }
 
+    public void slettArbeidsliste(Fnr fnr) {
+        arbeidslisteRepository.slettArbeidsliste(fnr);
+    }
+
+    @Deprecated
     public Try<AktoerId> deleteArbeidsliste(Fnr fnr) {
         Try<AktoerId> aktoerId = hentAktoerId(fnr);
         if (aktoerId.isFailure()) {

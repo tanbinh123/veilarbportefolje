@@ -13,7 +13,7 @@ import no.nav.pto.veilarbportefolje.client.VeilarbVeilederClient;
 import no.nav.pto.veilarbportefolje.database.BrukerRepository;
 import no.nav.pto.veilarbportefolje.domene.*;
 import no.nav.pto.veilarbportefolje.elastic.domene.OppfolgingsBruker;
-import no.nav.pto.veilarbportefolje.kafka.IntegrationTest;
+import no.nav.pto.veilarbportefolje.kafka.EndToEndTest;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-public class ElasticServiceIntegrationTest extends IntegrationTest {
+public class ElasticServiceEndToEndTest extends EndToEndTest {
 
     private static final String TEST_INDEX = createIndexName("test_index");
     private static final String TEST_ENHET = "0000";

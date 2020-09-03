@@ -3,6 +3,8 @@ package no.nav.pto.veilarbportefolje;
 import no.nav.common.featuretoggle.UnleashService;
 import no.nav.pto.veilarbportefolje.config.MergeMigrationResolver;
 import org.flywaydb.core.Flyway;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -10,8 +12,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +36,11 @@ public class TestUtil {
         setHsqlToOraSyntax(ds);
         migrateDb(ds);
         return ds;
+    }
+
+    public static JdbcTemplate setupJdbc() {
+        final SingleConnectionDataSource ds = setupInMemoryDatabase();
+        return new JdbcTemplate(ds);
     }
 
     public static UnleashService createUnleashMock() {

@@ -38,7 +38,7 @@ import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 import static org.elasticsearch.client.RestClient.builder;
 
-public class IntegrationTest {
+public class EndToEndTest {
     protected final static ElasticsearchContainer ELASTICSEARCH_CONTAINER;
     protected final static RestHighLevelClient ELASTIC_CLIENT;
 
