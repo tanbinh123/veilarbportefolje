@@ -1,6 +1,6 @@
 package no.nav.pto.veilarbportefolje.kafka;
 
-import lombok.SneakyThrows;
+import no.nav.common.utils.ExceptionUtils;
 import no.nav.pto.veilarbportefolje.domene.Fnr;
 import org.apache.http.util.EntityUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -23,6 +23,7 @@ import org.json.JSONObject;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -30,6 +31,7 @@ import java.util.function.Supplier;
 
 import static java.lang.System.currentTimeMillis;
 import static no.nav.pto.veilarbportefolje.elastic.Constant.ELASTICSEARCH_VERSION;
+import static no.nav.pto.veilarbportefolje.util.ExceptionUtils.sneakyThrows;
 import static org.apache.http.HttpHost.create;
 import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
@@ -75,46 +77,45 @@ public class IntegrationTest {
         return properties;
     }
 
-    @SneakyThrows
     protected static GetResponse fetchDocument(String indexName, Fnr fnr) {
         GetRequest getRequest = new GetRequest();
         getRequest.index(indexName);
         getRequest.id(fnr.toString());
-        return ELASTIC_CLIENT.get(getRequest, DEFAULT);
+        return sneakyThrows(() -> ELASTIC_CLIENT.get(getRequest, DEFAULT)).orElseThrow();
     }
 
-    @SneakyThrows
     protected static IndexResponse createDocument(String indexName, Fnr fnr, String json) {
         IndexRequest indexRequest = new IndexRequest();
         indexRequest.index(indexName);
         indexRequest.type("_doc");
         indexRequest.id(fnr.getFnr());
         indexRequest.source(json, XContentType.JSON);
-        return ELASTIC_CLIENT.index(indexRequest, DEFAULT);
+        return sneakyThrows(() -> ELASTIC_CLIENT.index(indexRequest, DEFAULT)).orElseThrow();
     }
 
-    @SneakyThrows
     public static AcknowledgedResponse deleteIndex(String indexName) {
         DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(indexName);
-        return ELASTIC_CLIENT.indices().delete(deleteIndexRequest, DEFAULT);
+        return sneakyThrows(() -> ELASTIC_CLIENT.indices().delete(deleteIndexRequest, DEFAULT)).orElseThrow();
     }
 
-    @SneakyThrows
     public static void createIndex(String indexName) {
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
-        ELASTIC_CLIENT.indices().create(createIndexRequest, DEFAULT);
+        sneakyThrows(() -> ELASTIC_CLIENT.indices().create(createIndexRequest, DEFAULT)).orElseThrow();
     }
 
-
-    @SneakyThrows
     public static int countDocuments(String indexName) {
         Request request = new Request("GET", indexName + "/_count");
-        Response response = ELASTIC_CLIENT.getLowLevelClient().performRequest(request);
-        String entity = EntityUtils.toString(response.getEntity());
-        return new JSONObject(entity).getInt("count");
+        Response response;
+
+        try {
+            response = ELASTIC_CLIENT.getLowLevelClient().performRequest(request);
+            String entity = EntityUtils.toString(response.getEntity());
+            return new JSONObject(entity).getInt("count");
+        } catch (IOException e) {
+            ExceptionUtils.throwUnchecked(e);
+        }
+        throw new IllegalStateException();
     }
-
-
 
     public static void populateKafkaTopic(String topic, String key ,String payload) {
 

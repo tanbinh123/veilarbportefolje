@@ -1,19 +1,18 @@
 package no.nav.pto.veilarbportefolje.arenafiler.gr202.tiltak;
 
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
-
-import lombok.SneakyThrows;
-import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetStatus;
-import no.nav.pto.veilarbportefolje.domene.PersonId;
-import no.nav.pto.veilarbportefolje.aktiviteter.UtdanningaktivitetTyper;
-import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetUtils;
 import no.nav.melding.virksomhet.tiltakogaktiviteterforbrukere.v1.*;
+import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetStatus;
+import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetUtils;
+import no.nav.pto.veilarbportefolje.aktiviteter.UtdanningaktivitetTyper;
+import no.nav.pto.veilarbportefolje.domene.PersonId;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -24,7 +23,7 @@ import java.util.GregorianCalendar;
 import static java.lang.System.setProperty;
 import static junit.framework.TestCase.assertTrue;
 import static no.nav.pto.veilarbportefolje.config.ApplicationConfig.ARENA_AKTIVITET_DATOFILTER_PROPERTY;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TiltakUtilsTest {
@@ -35,7 +34,7 @@ public class TiltakUtilsTest {
     }
 
     @Test
-    public void skalFinneNesteUtlopsdatoForTiltak() {
+    public void skalFinneNesteUtlopsdatoForTiltak() throws DatatypeConfigurationException {
         Bruker bruker = new Bruker();
         Timestamp past = Timestamp.from(Instant.now().minus(10, ChronoUnit.DAYS));
         Timestamp compareTime = Timestamp.from(Instant.now());
@@ -45,11 +44,12 @@ public class TiltakUtilsTest {
         bruker.getTiltaksaktivitetListe().add(tiltaksaktivitetWithTiltakTOM(past, future));
 
         AktivitetStatus aktivitetStatus = TiltakUtils.utledAktivitetstatusForTiltak(bruker, PersonId.of("personid"));
+        assertThat(aktivitetStatus).isNotNull();
         assertThat(aktivitetStatus.getNesteUtlop()).isAfter(compareTime);
     }
 
     @Test
-    public void skalFinneNesteUtlopsdatoForGruppeaktivitet() {
+    public void skalFinneNesteUtlopsdatoForGruppeaktivitet() throws DatatypeConfigurationException {
         Bruker bruker = new Bruker();
         Timestamp past = Timestamp.from(Instant.now().minus(10, ChronoUnit.DAYS));
         Timestamp compareTime = Timestamp.from(Instant.now());
@@ -59,11 +59,12 @@ public class TiltakUtilsTest {
         bruker.getGruppeaktivitetListe().add(getGruppeaktivitet(past, future));
 
         AktivitetStatus aktivitetStatus = TiltakUtils.utledGruppeaktivitetstatus(bruker, PersonId.of("personid"));
+        assertThat(aktivitetStatus).isNotNull();
         assertThat(aktivitetStatus.getNesteUtlop()).isAfter(compareTime);
     }
 
     @Test
-    public void skalFinneNesteUtlopsdatoForUtdanningsaktivitet() {
+    public void skalFinneNesteUtlopsdatoForUtdanningsaktivitet() throws DatatypeConfigurationException {
 
         Bruker bruker = new Bruker();
         Timestamp past = Timestamp.from(Instant.now().minus(10, ChronoUnit.DAYS));
@@ -74,11 +75,13 @@ public class TiltakUtilsTest {
         bruker.getUtdanningsaktivitetListe().add(getUtdanningsaktivitet(future, future));
 
         AktivitetStatus aktivitetStatus = TiltakUtils.utledUtdanningsaktivitetstatus(bruker, PersonId.of("personid"));
+
+        assertThat(aktivitetStatus).isNotNull();
         assertThat(aktivitetStatus.getNesteUtlop()).isAfter(compareTime);
     }
 
     @Test
-    public void skalFinneNyesteTiltaksDatoerForBruker() {
+    public void skalFinneNyesteTiltaksDatoerForBruker() throws DatatypeConfigurationException {
         Bruker bruker = new Bruker();
 
         Timestamp ekstraVeryLongTimeago = Timestamp.from(Instant.now().minus(200, ChronoUnit.DAYS));
@@ -104,7 +107,7 @@ public class TiltakUtilsTest {
     }
 
     @Test
-    public void skalBareTaHensynTilNyesteMoteplanForUtlopsdato() {
+    public void skalBareTaHensynTilNyesteMoteplanForUtlopsdato() throws DatatypeConfigurationException {
         Bruker bruker = new Bruker();
         Timestamp past = Timestamp.from(Instant.now().minus(10, ChronoUnit.DAYS));
         Timestamp future = Timestamp.from(Instant.now().plus(10, ChronoUnit.DAYS));
@@ -112,12 +115,12 @@ public class TiltakUtilsTest {
         bruker.getGruppeaktivitetListe().add(getGruppeaktivitetWithTwoMoeteplan(past, past, past, future));
         TiltakOppdateringer tiltakOppdateringer = TiltakUtils.finnOppdateringForBruker(bruker);
 
-        assertThat(tiltakOppdateringer.getNyesteUtlopteAktivitet() == null).isTrue();
+        assertThat(tiltakOppdateringer.getNyesteUtlopteAktivitet()).isNull();
     }
 
 
     @Test
-    public void skalBareTaHensynTilEldsteMoteplanForStartDato() {
+    public void skalBareTaHensynTilEldsteMoteplanForStartDato() throws DatatypeConfigurationException {
         Bruker bruker = new Bruker();
         Timestamp past = Timestamp.from(Instant.now().minus(10, ChronoUnit.DAYS));
         Timestamp future = Timestamp.from(Instant.now().plus(10, ChronoUnit.DAYS));
@@ -125,33 +128,36 @@ public class TiltakUtilsTest {
         bruker.getGruppeaktivitetListe().add(getGruppeaktivitetWithTwoMoeteplan(past, future, future, future));
         TiltakOppdateringer tiltakOppdateringer = TiltakUtils.finnOppdateringForBruker(bruker);
 
-        assertThat(tiltakOppdateringer.getAktivitetStart() == null).isTrue();
-        assertThat(tiltakOppdateringer.getForrigeAktivitetStart() != null).isTrue();
+        assertThat(tiltakOppdateringer.getAktivitetStart()).isNull();
+        assertThat(tiltakOppdateringer.getForrigeAktivitetStart()).isNotNull();
     }
 
     @Test
     public void skalIkkeTryneOmDetIkkeFinnesDatoer() {
         TiltakOppdateringer tiltakOppdateringer = TiltakUtils.finnOppdateringForBruker(new Bruker());
 
-        assertThat(tiltakOppdateringer.getNyesteUtlopteAktivitet() == null).isTrue();
-        assertThat(tiltakOppdateringer.getAktivitetStart() == null).isTrue();
-        assertThat(tiltakOppdateringer.getForrigeAktivitetStart() == null).isTrue();
-        assertThat(tiltakOppdateringer.getNesteAktivitetStart() == null).isTrue();
+        assertThat(tiltakOppdateringer.getNyesteUtlopteAktivitet()).isNull();
+        assertThat(tiltakOppdateringer.getAktivitetStart()).isNull();
+        assertThat(tiltakOppdateringer.getForrigeAktivitetStart()).isNull();
+        assertThat(tiltakOppdateringer.getNesteAktivitetStart()).isNull();
     }
 
     @Test
-    public void skalIkkeTaHensynTilDatoerForDatoFilter() {
+    public void skalIkkeTaHensynTilDatoerForDatoFilter() throws DatatypeConfigurationException {
         setProperty(ARENA_AKTIVITET_DATOFILTER_PROPERTY, "2000-01-01");
 
         Bruker bruker = new Bruker();
         Timestamp beforeFilter = AktivitetUtils.parseDato("1999-01-01");
+        assertThat(beforeFilter).isNotNull();
+
         bruker.getGruppeaktivitetListe().add(getGruppeaktivitet(beforeFilter, beforeFilter));
         TiltakOppdateringer tiltakOppdateringer = TiltakUtils.finnOppdateringForBruker(bruker);
-        assertThat(tiltakOppdateringer.getNyesteUtlopteAktivitet() == null).isTrue();
-        assertThat(tiltakOppdateringer.getAktivitetStart() == null).isTrue();
+
+        assertThat(tiltakOppdateringer.getNyesteUtlopteAktivitet()).isNull();
+        assertThat(tiltakOppdateringer.getAktivitetStart()).isNull();
     }
 
-    private Utdanningsaktivitet getUtdanningsaktivitet(Timestamp fra, Timestamp til) {
+    private Utdanningsaktivitet getUtdanningsaktivitet(Timestamp fra, Timestamp til) throws DatatypeConfigurationException {
         LocalDate fraLocalDate = fra.toLocalDateTime().toLocalDate();
         XMLGregorianCalendar FOM = calendarOf(fraLocalDate.getYear(), fraLocalDate.getMonthValue(), fraLocalDate.getDayOfMonth());
 
@@ -167,7 +173,7 @@ public class TiltakUtilsTest {
         return utdanningsaktivitet;
     }
 
-    private Gruppeaktivitet getGruppeaktivitet(Timestamp fra, Timestamp til) {
+    private Gruppeaktivitet getGruppeaktivitet(Timestamp fra, Timestamp til) throws DatatypeConfigurationException {
         LocalDate FOM = fra.toLocalDateTime().toLocalDate();
         LocalDate TOM = til.toLocalDateTime().toLocalDate();
 
@@ -180,7 +186,7 @@ public class TiltakUtilsTest {
         return gruppeaktivitet;
     }
 
-    private Gruppeaktivitet getGruppeaktivitetWithTwoMoeteplan(Timestamp fra1, Timestamp fra2, Timestamp til1, Timestamp til2) {
+    private Gruppeaktivitet getGruppeaktivitetWithTwoMoeteplan(Timestamp fra1, Timestamp fra2, Timestamp til1, Timestamp til2) throws DatatypeConfigurationException {
         LocalDate fraLocalDate1 = fra1.toLocalDateTime().toLocalDate();
         LocalDate fraLocalDate2 = fra2.toLocalDateTime().toLocalDate();
         LocalDate tilLocalDate1 = til1.toLocalDateTime().toLocalDate();
@@ -199,7 +205,7 @@ public class TiltakUtilsTest {
         return gruppeaktivitet;
     }
 
-    private Tiltaksaktivitet tiltaksaktivitetWithTiltakTOM(Timestamp fra, Timestamp til) {
+    private Tiltaksaktivitet tiltaksaktivitetWithTiltakTOM(Timestamp fra, Timestamp til) throws DatatypeConfigurationException {
         LocalDate fraLocalDate = fra.toLocalDateTime().toLocalDate();
         LocalDate tilLocalDate = til.toLocalDateTime().toLocalDate();
         Periode periode =  new Periode();
@@ -210,8 +216,7 @@ public class TiltakUtilsTest {
         return t;
     }
 
-    @SneakyThrows
-    private XMLGregorianCalendar calendarOf(int year, int month, int day) {
+    private XMLGregorianCalendar calendarOf(int year, int month, int day) throws DatatypeConfigurationException {
         GregorianCalendar calendar = new GregorianCalendar();
         calendar.set(Calendar.YEAR, year);
         calendar.set(Calendar.MONTH, (month-1)); // HACKS FORDI MONTH I GregorianCalendar er 0 indeksert

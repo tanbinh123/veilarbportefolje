@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 import java.util.Optional;
 
 import static no.nav.pto.veilarbportefolje.TestUtil.setupInMemoryDatabase;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class PersonRepositoryTest {
     private DataSource ds;

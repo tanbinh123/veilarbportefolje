@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.elastic;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.common.metrics.Event;
 import no.nav.common.metrics.MetricsClient;
@@ -47,6 +46,7 @@ import static no.nav.pto.veilarbportefolje.aktiviteter.AktivitetUtils.filtrerBru
 import static no.nav.pto.veilarbportefolje.elastic.ElasticUtils.createIndexName;
 import static no.nav.pto.veilarbportefolje.elastic.ElasticUtils.getAlias;
 import static no.nav.pto.veilarbportefolje.elastic.IndekseringUtils.finnBruker;
+import static no.nav.pto.veilarbportefolje.util.ExceptionUtils.sneakyThrows;
 import static no.nav.pto.veilarbportefolje.util.UnderOppfolgingRegler.erUnderOppfolging;
 import static org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest.AliasActions.Type.ADD;
 import static org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest.AliasActions.Type.REMOVE;
@@ -79,7 +79,6 @@ public class ElasticIndexer {
         this.indexName = indexName;
     }
 
-    @SneakyThrows
     public void startIndeksering() {
         hovedIndeksering();
     }
@@ -185,12 +184,11 @@ public class ElasticIndexer {
         metricsClient.report(new Event("es.deltaindeksering.fullfort").addFieldToReport("es.antall.oppdateringer", antall));
     }
 
-    @SneakyThrows
     private boolean indeksenIkkeFinnes() {
         GetIndexRequest request = new GetIndexRequest();
         request.indices(indexName);
 
-        boolean exists = restHighLevelClient.indices().exists(request, DEFAULT);
+        boolean exists = sneakyThrows(() -> restHighLevelClient.indices().exists(request, DEFAULT)).orElseThrow();
         return !exists;
     }
 
@@ -200,18 +198,19 @@ public class ElasticIndexer {
                 .forEach(this::markerBrukerSomSlettet);
     }
 
-    @SneakyThrows
     public void markerBrukerSomSlettet(OppfolgingsBruker bruker) {
         log.info("Markerer bruker {} som slettet", bruker.getAktoer_id());
         UpdateRequest updateRequest = new UpdateRequest();
         updateRequest.index(indexName);
         updateRequest.type("_doc");
         updateRequest.id(bruker.getFnr());
-        updateRequest.doc(jsonBuilder()
-                .startObject()
-                .field("oppfolging", false)
-                .endObject()
-        );
+
+        sneakyThrows(() ->
+                updateRequest.doc(jsonBuilder()
+                        .startObject()
+                        .field("oppfolging", false)
+                        .endObject()
+                ));
 
         restHighLevelClient.updateAsync(updateRequest, DEFAULT, new ActionListener<>() {
             @Override
@@ -251,21 +250,19 @@ public class ElasticIndexer {
         }
     }
 
-    @SneakyThrows
     public Optional<String> hentGammeltIndeksNavn() {
-        GetAliasesRequest getAliasRequest = new GetAliasesRequest(indexName);
-        GetAliasesResponse response = restHighLevelClient.indices().getAlias(getAliasRequest, DEFAULT);
+        final GetAliasesRequest getAliasRequest = new GetAliasesRequest(indexName);
+        final GetAliasesResponse response = sneakyThrows(() -> restHighLevelClient.indices().getAlias(getAliasRequest, DEFAULT)).orElseThrow();
         return response.getAliases().keySet().stream().findFirst();
     }
 
-    @SneakyThrows
     private void opprettAliasForIndeks(String indeks) {
         AliasActions addAliasAction = new AliasActions(ADD)
                 .index(indeks)
                 .alias(indexName);
 
         IndicesAliasesRequest request = new IndicesAliasesRequest().addAliasAction(addAliasAction);
-        AcknowledgedResponse response = restHighLevelClient.indices().updateAliases(request, DEFAULT);
+        AcknowledgedResponse response = sneakyThrows(() -> restHighLevelClient.indices().updateAliases(request, DEFAULT)).orElseThrow();
 
         if (!response.isAcknowledged()) {
             log.error("Kunne ikke legge til alias {}", indexName);
@@ -273,7 +270,6 @@ public class ElasticIndexer {
         }
     }
 
-    @SneakyThrows
     private void flyttAliasTilNyIndeks(String gammelIndeks, String nyIndeks) {
 
         AliasActions addAliasAction = new AliasActions(ADD)
@@ -288,7 +284,7 @@ public class ElasticIndexer {
                 .addAliasAction(removeAliasAction)
                 .addAliasAction(addAliasAction);
 
-        AcknowledgedResponse response = restHighLevelClient.indices().updateAliases(request, DEFAULT);
+        AcknowledgedResponse response = sneakyThrows(() -> restHighLevelClient.indices().updateAliases(request, DEFAULT)).orElseThrow();
 
         if (!response.isAcknowledged()) {
             log.error("Kunne ikke oppdatere alias {}", indexName);
@@ -342,19 +338,17 @@ public class ElasticIndexer {
         skrivTilIndeks(indeksNavn, Collections.singletonList(oppfolgingsBruker));
     }
 
-    @SneakyThrows
     public String opprettNyIndeks(String navn) {
 
-        String json = IOUtils.toString(getClass().getResource("/elastic_settings.json"), Charset.forName("UTF-8"));
+        String json = sneakyThrows(() -> IOUtils.toString(getClass().getResource("/elastic_settings.json"), Charset.forName("UTF-8"))).orElseThrow();
         CreateIndexRequest request = new CreateIndexRequest(navn)
                 .source(json, XContentType.JSON);
 
-        CreateIndexResponse response = restHighLevelClient.indices().create(request, DEFAULT);
+        CreateIndexResponse response = sneakyThrows(() -> restHighLevelClient.indices().create(request, DEFAULT)).orElseThrow();
         if (!response.isAcknowledged()) {
             log.error("Kunne ikke opprette ny indeks {}", navn);
             throw new RuntimeException();
         }
-
         return navn;
     }
 

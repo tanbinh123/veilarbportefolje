@@ -1,7 +1,6 @@
 package no.nav.pto.veilarbportefolje.oppfolging;
 
 import io.vavr.control.Try;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.pto.veilarbportefolje.domene.AktoerId;
 import no.nav.pto.veilarbportefolje.domene.BrukerOppdatertInformasjon;
@@ -11,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 
@@ -56,8 +56,7 @@ public class OppfolgingRepository {
     }
 
 
-    @SneakyThrows
-    private BrukerOppdatertInformasjon mapToBrukerOppdatertInformasjon(ResultSet rs, int i) {
+    private BrukerOppdatertInformasjon mapToBrukerOppdatertInformasjon(ResultSet rs, int i) throws SQLException {
         return new BrukerOppdatertInformasjon()
                 .setAktoerid(rs.getString("AKTOERID"))
                 .setEndretTimestamp(rs.getTimestamp("OPPDATERT_KILDESYSTEM"))

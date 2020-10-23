@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.vedtakstotte;
 
-import lombok.SneakyThrows;
 import no.nav.sbl.sql.SqlUtils;
 import no.nav.sbl.sql.where.WhereClause;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
@@ -55,8 +55,7 @@ public class VedtakStatusRepository {
                 .executeToList();
     }
 
-    @SneakyThrows
-    private static KafkaVedtakStatusEndring mapKafkaVedtakStatusEndring(ResultSet rs){
+    private static KafkaVedtakStatusEndring mapKafkaVedtakStatusEndring(ResultSet rs) throws SQLException {
         Optional<String> hovedmal = Optional.ofNullable(rs.getString("HOVEDMAL"));
         Optional<String> innsatsgruppe =  Optional.ofNullable(rs.getString("INNSATSGRUPPE"));
         return new KafkaVedtakStatusEndring()

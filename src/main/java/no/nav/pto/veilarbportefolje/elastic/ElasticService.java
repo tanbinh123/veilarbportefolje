@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.elastic;
 
-import lombok.SneakyThrows;
 import no.nav.common.featuretoggle.UnleashService;
 import no.nav.common.json.JsonUtils;
 import no.nav.pto.veilarbportefolje.client.VeilarbVeilederClient;
@@ -23,6 +22,7 @@ import java.util.Optional;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static no.nav.pto.veilarbportefolje.elastic.ElasticQueryBuilder.*;
+import static no.nav.pto.veilarbportefolje.util.ExceptionUtils.sneakyThrows;
 import static org.elasticsearch.index.query.QueryBuilders.*;
 
 public class ElasticService {
@@ -134,13 +134,12 @@ public class ElasticService {
         return new FacetResults(buckets);
     }
 
-    @SneakyThrows
     private <T> T search(SearchSourceBuilder searchSourceBuilder, String indexAlias, Class<T> clazz) {
         SearchRequest request = new SearchRequest()
                 .indices(indexAlias)
                 .source(searchSourceBuilder);
 
-        SearchResponse response = restHighLevelClient.search(request, RequestOptions.DEFAULT);
+        SearchResponse response = sneakyThrows(() -> restHighLevelClient.search(request, RequestOptions.DEFAULT)).orElseThrow();
         return JsonUtils.fromJson(response.toString(), clazz);
     }
 

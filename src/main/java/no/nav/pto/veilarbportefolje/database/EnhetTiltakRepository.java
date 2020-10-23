@@ -1,7 +1,6 @@
 package no.nav.pto.veilarbportefolje.database;
 
 import io.vavr.control.Try;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.pto.veilarbportefolje.domene.EnhetTiltak;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,8 +30,7 @@ public class EnhetTiltakRepository {
         ).onFailure(e -> log.info("Finner ingen tiltaksaktiviteter i databasen for enhet med enhetid {}", enhet));
     }
 
-    @SneakyThrows
-    private static EnhetTiltak rowMapper(ResultSet rs) {
+    private static EnhetTiltak rowMapper(ResultSet rs) throws SQLException {
         Map<String,String> tiltak = new HashMap<>();
 
         while(rs.next()) {

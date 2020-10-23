@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.config;
 
-import lombok.SneakyThrows;
 import org.flywaydb.core.api.resolver.BaseMigrationResolver;
 import org.flywaydb.core.api.resolver.ResolvedMigration;
 import org.flywaydb.core.internal.dbsupport.DbSupport;
@@ -11,8 +10,11 @@ import org.flywaydb.core.internal.util.Location;
 import org.flywaydb.core.internal.util.PlaceholderReplacer;
 import org.flywaydb.core.internal.util.scanner.Scanner;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static no.nav.pto.veilarbportefolje.util.ExceptionUtils.sneakyThrows;
 
 public class MergeMigrationResolver extends BaseMigrationResolver {
     private DbSupport dbSupport;
@@ -23,8 +25,7 @@ public class MergeMigrationResolver extends BaseMigrationResolver {
     private String[] mergeLocations = new String[]{"testmigration", "db/migration"};
 
 
-    @SneakyThrows
-    public void init() {
+    public void init() throws SQLException {
         scanner = new Scanner(Thread.currentThread().getContextClassLoader());
         placeholderReplacer = new PlaceholderReplacer(flywayConfiguration.getPlaceholders(),
                 flywayConfiguration.getPlaceholderPrefix(),
@@ -34,7 +35,7 @@ public class MergeMigrationResolver extends BaseMigrationResolver {
 
     @Override
     public List<ResolvedMigration> resolveMigrations() {
-        init();
+        sneakyThrows(() -> init());
 
         List<ResolvedMigration> migrations = new ArrayList<>();
 

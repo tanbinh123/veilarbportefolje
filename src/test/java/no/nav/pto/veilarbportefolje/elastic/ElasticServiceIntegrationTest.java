@@ -934,7 +934,6 @@ public class ElasticServiceIntegrationTest extends IntegrationTest {
         skrivBrukereTilTestindeks(brukere.toArray(array));
     }
 
-    @SneakyThrows
     private void skrivBrukereTilTestindeks(OppfolgingsBruker... brukere) {
         elasticIndexer.skrivTilIndeks(TEST_INDEX, listOf(brukere));
         ELASTIC_CLIENT.indices().refreshAsync(new RefreshRequest(TEST_INDEX), RequestOptions.DEFAULT, new ActionListener<>() {

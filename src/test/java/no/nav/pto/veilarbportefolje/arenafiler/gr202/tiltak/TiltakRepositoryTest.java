@@ -2,13 +2,13 @@ package no.nav.pto.veilarbportefolje.arenafiler.gr202.tiltak;
 
 import com.google.common.base.Joiner;
 import io.vavr.collection.List;
-import lombok.SneakyThrows;
 import no.nav.pto.veilarbportefolje.database.BrukerRepositoryTest;
 import no.nav.pto.veilarbportefolje.domene.Tiltakkodeverk;
 import no.nav.melding.virksomhet.tiltakogaktiviteterforbrukere.v1.Bruker;
 import no.nav.melding.virksomhet.tiltakogaktiviteterforbrukere.v1.Periode;
 import no.nav.melding.virksomhet.tiltakogaktiviteterforbrukere.v1.Tiltaksaktivitet;
 import no.nav.melding.virksomhet.tiltakogaktiviteterforbrukere.v1.Tiltakstyper;
+import no.nav.pto.veilarbportefolje.util.ExceptionUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +48,7 @@ public class TiltakRepositoryTest {
     }
 
     @Test
-    public void skalSletteDataITabeller() throws Exception {
+    public void skalSletteDataITabeller() {
         insertTestData();
         tiltakRepository.slettEnhettiltak();
         tiltakRepository.slettBrukertiltak();
@@ -60,7 +60,6 @@ public class TiltakRepositoryTest {
     }
 
     @Test
-    @SneakyThrows
     public void skalInserteBrukertiltak() {
         insertKodeverk();
         Bruker bruker = mock(Bruker.class);
@@ -71,7 +70,10 @@ public class TiltakRepositoryTest {
 
         GregorianCalendar calendar = new GregorianCalendar();
         calendar.set(2000, 6, 4, 16, 16, 16);
-        periode1.setTom(DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar));
+
+        final DatatypeFactory datatypeFactory = ExceptionUtils.sneakyThrows(() -> DatatypeFactory.newInstance()).orElseThrow();
+        periode1.setTom(datatypeFactory.newXMLGregorianCalendar(calendar));
+
         tiltaksaktivitet1.setDeltakelsePeriode(periode1);
         when(bruker.getTiltaksaktivitetListe()).thenReturn(Arrays.asList(
                 tiltaksaktivitet1

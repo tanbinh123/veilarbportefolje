@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.util;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.pto.veilarbportefolje.elastic.domene.OppfolgingsBruker;
 import no.nav.pto.veilarbportefolje.vedtakstotte.KafkaVedtakStatusEndring;
@@ -8,6 +7,7 @@ import org.apache.commons.lang3.text.WordUtils;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -21,8 +21,7 @@ import static no.nav.pto.veilarbportefolje.util.OppfolgingUtils.isNyForEnhet;
 @Slf4j
 public class DbUtils {
 
-    @SneakyThrows
-    public static OppfolgingsBruker mapTilOppfolgingsBruker(ResultSet rs) {
+    public static OppfolgingsBruker mapTilOppfolgingsBruker(ResultSet rs) throws SQLException {
         String formidlingsgruppekode = rs.getString("formidlingsgruppekode");
         String kvalifiseringsgruppekode = rs.getString("kvalifiseringsgruppekode");
         String brukersSituasjon = rs.getString("BRUKERS_SITUASJON");

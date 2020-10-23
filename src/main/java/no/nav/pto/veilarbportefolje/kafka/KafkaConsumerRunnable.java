@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.kafka;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.common.featuretoggle.UnleashService;
 import no.nav.common.metrics.Event;
@@ -28,6 +27,7 @@ import static java.time.Duration.ofSeconds;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static no.nav.common.log.LogFilter.PREFERRED_NAV_CALL_ID_HEADER_NAME;
+import static no.nav.pto.veilarbportefolje.util.ExceptionUtils.sneakyThrows;
 
 @Slf4j
 public class KafkaConsumerRunnable<T> implements Runnable {
@@ -85,10 +85,9 @@ public class KafkaConsumerRunnable<T> implements Runnable {
         }
     }
 
-    @SneakyThrows
     public void shutdown() {
         shutdown.set(true);
-        shutdownLatch.await();
+        sneakyThrows(() -> shutdownLatch.await());
     }
 
     private void rewind() {

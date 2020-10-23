@@ -1,10 +1,9 @@
 package no.nav.pto.veilarbportefolje.elastic;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.common.rest.client.RestUtils;
-import no.nav.common.utils.Credentials;
 import no.nav.common.utils.EnvironmentUtils;
+import no.nav.common.utils.ExceptionUtils;
 import no.nav.pto.veilarbportefolje.elastic.domene.CountResponse;
 import no.nav.pto.veilarbportefolje.elastic.domene.ElasticClientConfig;
 import okhttp3.OkHttpClient;
@@ -16,15 +15,16 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.RestClient;
 
-
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 
+import static no.nav.common.rest.client.RestUtils.throwIfNotSuccessful;
 import static no.nav.common.utils.EnvironmentUtils.resolveHostName;
 import static no.nav.pto.veilarbportefolje.elastic.ElasticConfig.VEILARBELASTIC_PASSWORD;
 import static no.nav.pto.veilarbportefolje.elastic.ElasticConfig.VEILARBELASTIC_USERNAME;
@@ -90,7 +90,6 @@ public class ElasticUtils {
     }
 
 
-    @SneakyThrows
     public static long getCount() {
         String url = ElasticUtils.getAbsoluteUrl() + "_doc/_count";
         OkHttpClient client = no.nav.common.rest.client.RestClient.baseClient();
@@ -101,11 +100,17 @@ public class ElasticUtils {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            RestUtils.throwIfNotSuccessful(response);
+            throwIfNotSuccessful(response);
+
            return RestUtils.parseJsonResponse(response, CountResponse.class)
                    .map(CountResponse::getCount)
                    .orElse(0L);
+
+        } catch (IOException e) {
+            ExceptionUtils.throwUnchecked(e);
         }
+
+        throw new IllegalStateException();
     }
 
     static String getAbsoluteUrl() {

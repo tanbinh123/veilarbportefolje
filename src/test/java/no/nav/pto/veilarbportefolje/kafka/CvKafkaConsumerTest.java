@@ -11,6 +11,8 @@ import org.json.JSONObject;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
+
 import static java.util.Arrays.stream;
 import static no.nav.common.utils.IdUtils.generateId;
 import static no.nav.pto.veilarbportefolje.TestUtil.createUnleashMock;
@@ -38,7 +40,7 @@ public class CvKafkaConsumerTest extends IntegrationTest {
     }
 
     @Test
-    public void skal_populere_elastic_med_cv_og_spole_tilbake() {
+    public void skal_populere_elastic_med_cv_og_spole_tilbake() throws IOException {
 
         Fnr fnr1 = Fnr.of("11111111111");
         Fnr fnr2 = Fnr.of("22222222222");
@@ -65,7 +67,7 @@ public class CvKafkaConsumerTest extends IntegrationTest {
 
     }
 
-    private void assertCvDocumentsAreTrueInElastic(Fnr... fnrs) {
+    private void assertCvDocumentsAreTrueInElastic(Fnr... fnrs) throws IOException {
         for (Fnr fnr : fnrs) {
             GetResponse getResponse = fetchDocument(indexName, fnr);
             assertThat(harDeltCv(getResponse)).isTrue();
@@ -85,7 +87,7 @@ public class CvKafkaConsumerTest extends IntegrationTest {
         }
     }
 
-    private void assertCvDocumentsAreFalseInElastic(Fnr... fnrs) {
+    private void assertCvDocumentsAreFalseInElastic(Fnr... fnrs) throws IOException {
         for (Fnr fnr : fnrs) {
             GetResponse getResponse = fetchDocument(indexName, fnr);
             assertThat(harDeltCv(getResponse)).isFalse();

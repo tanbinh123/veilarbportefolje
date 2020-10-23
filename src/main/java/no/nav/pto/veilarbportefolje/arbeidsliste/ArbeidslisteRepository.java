@@ -1,7 +1,6 @@
 package no.nav.pto.veilarbportefolje.arbeidsliste;
 
 import io.vavr.control.Try;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.pto.veilarbportefolje.database.Table;
 import no.nav.pto.veilarbportefolje.domene.AktoerId;
@@ -14,6 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Optional;
 
@@ -107,8 +107,7 @@ public class ArbeidslisteRepository {
                 .execute();
     }
 
-    @SneakyThrows
-    private static Arbeidsliste arbeidslisteMapper(ResultSet rs) {
+    private static Arbeidsliste arbeidslisteMapper(ResultSet rs) throws SQLException {
         return new Arbeidsliste(
                 VeilederId.of(rs.getString("SIST_ENDRET_AV_VEILEDERIDENT")),
                 toZonedDateTime(rs.getTimestamp("ENDRINGSTIDSPUNKT")),

@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.feed.consumer;
 
-import lombok.SneakyThrows;
 import no.nav.common.rest.client.RestUtils;
 import no.nav.pto.veilarbportefolje.domene.BrukerOppdatertInformasjon;
 import no.nav.pto.veilarbportefolje.feed.common.*;
@@ -8,13 +7,15 @@ import okhttp3.*;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
-import java.time.Instant;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static no.nav.common.json.JsonUtils.toJson;
+import static no.nav.common.utils.ExceptionUtils.throwUnchecked;
 import static no.nav.pto.veilarbportefolje.feed.consumer.FeedPoller.createScheduledJob;
 import static no.nav.pto.veilarbportefolje.feed.util.UrlUtils.*;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -49,7 +50,6 @@ public class FeedConsumer implements Authorization, ApplicationListener<ContextC
         return true;
     }
 
-    @SneakyThrows
     void registerWebhook() {
         String callbackUrl = callbackUrl(this.config.webhookPollingConfig.apiRootPath, this.config.feedName);
 
@@ -70,10 +70,11 @@ public class FeedConsumer implements Authorization, ApplicationListener<ContextC
             } else if (responseStatus != 200) {
                 LOG.warn("Endepunkt for opprettelse av webhook returnerte feilkode {}", responseStatus);
             }
+        } catch (IOException e) {
+            throwUnchecked(e);
         }
     }
 
-    @SneakyThrows
     public synchronized Response poll() {
         String lastEntry = this.config.lastEntrySupplier.get();
         HttpUrl.Builder httpBuilder = Objects.requireNonNull(HttpUrl.parse(getTargetUrl())).newBuilder();
@@ -97,7 +98,10 @@ public class FeedConsumer implements Authorization, ApplicationListener<ContextC
                 this.lastResponseHash = response.hashCode();
             }
             return response;
+        } catch (IOException e) {
+            throwUnchecked(e);
         }
+        throw new IllegalStateException();
     }
 
     private String getTargetUrl() {

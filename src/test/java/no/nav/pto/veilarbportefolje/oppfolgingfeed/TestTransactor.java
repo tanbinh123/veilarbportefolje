@@ -1,6 +1,6 @@
 package no.nav.pto.veilarbportefolje.oppfolgingfeed;
 
-import lombok.SneakyThrows;
+import no.nav.common.utils.ExceptionUtils;
 import no.nav.pto.veilarbportefolje.database.Transactor;
 
 class TestTransactor extends Transactor {
@@ -10,9 +10,12 @@ class TestTransactor extends Transactor {
     }
 
     @Override
-    @SneakyThrows
     public void inTransaction(InTransaction inTransaction) {
-        inTransaction.run();
+        try {
+            inTransaction.run();
+        } catch (Throwable throwable) {
+            ExceptionUtils.throwUnchecked(throwable);
+        }
     }
 
 }

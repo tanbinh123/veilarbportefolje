@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.persononinfo;
 
-import lombok.SneakyThrows;
 import no.nav.pto.veilarbportefolje.domene.Fnr;
 import no.nav.pto.veilarbportefolje.domene.Personinfo;
 import no.nav.sbl.sql.SqlUtils;
@@ -10,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -35,8 +35,7 @@ public class PersonRepository {
                 .execute());
     }
 
-    @SneakyThrows
-    private static Personinfo mapper(ResultSet rs) {
+    private static Personinfo mapper(ResultSet rs) throws SQLException {
         return new Personinfo()
                 .withSikkerhetstiltak(rs.getString(SIKKERHETSTILTAK_TYPE_KODE))
                 .setEgenAnsatt(parseJorN(rs.getString(SPERRET_ANSATT)));

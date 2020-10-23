@@ -1,7 +1,6 @@
 package no.nav.pto.veilarbportefolje.domene;
 
 import lombok.Value;
-import lombok.experimental.Wither;
 import no.nav.melding.virksomhet.tiltakogaktiviteterforbrukere.v1.Aktivitetstyper;
 import no.nav.melding.virksomhet.tiltakogaktiviteterforbrukere.v1.Tiltakstyper;
 import no.nav.sbl.sql.InsertBatchQuery;
@@ -10,10 +9,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.List;
 
 @Value(staticConstructor = "of")
-@Wither
-public class Tiltakkodeverk {
-    private String kode;
-    private String verdi;
+public final class Tiltakkodeverk {
+    private final String kode;
+    private final String verdi;
 
     @Override
     public boolean equals(Object o) {
@@ -48,5 +46,13 @@ public class Tiltakkodeverk {
                 .add("kode", Tiltakkodeverk::getKode, String.class)
                 .add("verdi", Tiltakkodeverk::getVerdi, String.class)
                 .execute(data);
+    }
+
+    public Tiltakkodeverk withKode(String kode) {
+        return this.kode == kode ? this : new Tiltakkodeverk(kode, this.verdi);
+    }
+
+    public Tiltakkodeverk withVerdi(String verdi) {
+        return this.verdi == verdi ? this : new Tiltakkodeverk(this.kode, verdi);
     }
 }

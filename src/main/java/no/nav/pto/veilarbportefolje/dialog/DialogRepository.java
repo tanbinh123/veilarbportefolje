@@ -1,7 +1,6 @@
 package no.nav.pto.veilarbportefolje.dialog;
 
 import io.vavr.control.Try;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.sbl.sql.SqlUtils;
 import no.nav.sbl.sql.where.WhereClause;
@@ -10,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
@@ -50,8 +50,7 @@ public class DialogRepository {
         ).onFailure(e -> {});
     }
 
-    @SneakyThrows
-    private Dialogdata mapToDialogData(ResultSet rs, int i) {
+    private Dialogdata mapToDialogData(ResultSet rs, int i) throws SQLException {
         return new Dialogdata()
                 .setAktorId(rs.getString("AKTOERID"))
                 .setSisteEndring(rs.getTimestamp("OPPDATERT_KILDESYSTEM"))

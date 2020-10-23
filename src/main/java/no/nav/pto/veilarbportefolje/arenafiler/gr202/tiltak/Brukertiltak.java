@@ -1,7 +1,6 @@
 package no.nav.pto.veilarbportefolje.arenafiler.gr202.tiltak;
 
 import lombok.Value;
-import lombok.experimental.Wither;
 import no.nav.melding.virksomhet.tiltakogaktiviteterforbrukere.v1.Bruker;
 import no.nav.melding.virksomhet.tiltakogaktiviteterforbrukere.v1.Tiltaksaktivitet;
 import no.nav.pto.veilarbportefolje.domene.Fnr;
@@ -15,11 +14,10 @@ import static java.util.stream.Collectors.toList;
 import static no.nav.pto.veilarbportefolje.arenafiler.gr202.tiltak.TiltakUtils.utledTildato;
 
 @Value(staticConstructor = "of")
-@Wither
-public class Brukertiltak {
-    private Fnr fnr;
-    private String tiltak;
-    private Timestamp tildato;
+public final class Brukertiltak {
+    private final Fnr fnr;
+    private final String tiltak;
+    private final Timestamp tildato;
 
     @Override
     public boolean equals(Object o) {
@@ -61,4 +59,15 @@ public class Brukertiltak {
     }
 
 
+    public Brukertiltak withFnr(Fnr fnr) {
+        return this.fnr == fnr ? this : new Brukertiltak(fnr, this.tiltak, this.tildato);
+    }
+
+    public Brukertiltak withTiltak(String tiltak) {
+        return this.tiltak == tiltak ? this : new Brukertiltak(this.fnr, tiltak, this.tildato);
+    }
+
+    public Brukertiltak withTildato(Timestamp tildato) {
+        return this.tildato == tildato ? this : new Brukertiltak(this.fnr, this.tiltak, tildato);
+    }
 }

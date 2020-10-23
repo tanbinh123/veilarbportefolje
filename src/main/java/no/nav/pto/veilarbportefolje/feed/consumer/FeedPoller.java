@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.feed.consumer;
 
-import lombok.SneakyThrows;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
@@ -8,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static no.nav.pto.veilarbportefolje.feed.util.UrlUtils.asUrl;
+import static no.nav.pto.veilarbportefolje.util.ExceptionUtils.sneakyThrows;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
@@ -17,8 +17,7 @@ public class FeedPoller implements Job {
     private static Scheduler scheduler;
     private static Map<String, Runnable> jobs = new HashMap<>();
 
-    @SneakyThrows
-    public synchronized static Scheduler getScheduler() {
+    public synchronized static Scheduler getScheduler() throws SchedulerException {
         if (scheduler == null) {
             scheduler = new StdSchedulerFactory().getScheduler();
             scheduler.start();
@@ -33,7 +32,6 @@ public class FeedPoller implements Job {
         jobs.getOrDefault(name, () -> {}).run();
     }
 
-    @SneakyThrows
     public static void createScheduledJob(String name, String group, FeedConsumerConfig.ScheduleCreator scheduleCreator, Runnable jobImpl) {
         if (scheduleCreator != null) {
             JobDetail job = newJob(FeedPoller.class)
@@ -45,17 +43,20 @@ public class FeedPoller implements Job {
                     .withSchedule(scheduleCreator.scheduleBuilder)
                     .build();
 
-            getScheduler().scheduleJob(job, trigger);
+            try {
+                getScheduler().scheduleJob(job, trigger);
+            } catch (SchedulerException e) {
+                throw new RuntimeException(e);
+            }
 
             String jobname = asUrl(group, name);
             jobs.putIfAbsent(jobname, jobImpl);
         }
     }
 
-    @SneakyThrows
     public static void shutdown() {
         if (scheduler != null) {
-            scheduler.shutdown();
+            sneakyThrows(() -> scheduler.shutdown());
             jobs.clear();
             scheduler = null;
         }

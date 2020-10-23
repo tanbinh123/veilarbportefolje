@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.elastic;
 
-import lombok.SneakyThrows;
 import lombok.val;
 import no.nav.common.utils.Pair;
 import no.nav.pto.veilarbportefolje.domene.AktivitetFiltervalg;
@@ -10,6 +9,8 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -47,7 +48,7 @@ public class ElasticQueryBuilderTest {
     }
 
     @Test
-    public void skal_sortere_paa_aktiviteter_som_er_satt_til_ja() {
+    public void skal_sortere_paa_aktiviteter_som_er_satt_til_ja() throws IOException, URISyntaxException {
         val navnPaAktivitet = "behandling";
         val filtervalg = new Filtervalg().setAktiviteter(
                 mapOf(
@@ -65,7 +66,7 @@ public class ElasticQueryBuilderTest {
     }
 
     @Test
-    public void skal_bygge_korrekt_json_om_man_velger_nei_på_tiltak() {
+    public void skal_bygge_korrekt_json_om_man_velger_nei_på_tiltak() throws IOException, URISyntaxException {
         val filtervalg = new Filtervalg().setAktiviteter(mapOf(Pair.of("tiltak", NEI)));
         val builders = byggAktivitetFilterQuery(filtervalg, boolQuery());
 
@@ -76,7 +77,7 @@ public class ElasticQueryBuilderTest {
     }
 
     @Test
-    public void skal_bygge_korrekt_json_om_man_velger_ja_paa_behandling() {
+    public void skal_bygge_korrekt_json_om_man_velger_ja_paa_behandling() throws IOException, URISyntaxException {
         val filtervalg = new Filtervalg().setAktiviteter(mapOf(Pair.of("behandling", JA)));
         val builders = byggAktivitetFilterQuery(filtervalg, boolQuery());
 
@@ -87,7 +88,7 @@ public class ElasticQueryBuilderTest {
     }
 
     @Test
-    public void skal_bygge_korrekt_json_om_man_velger_ja_paa_tiltak() {
+    public void skal_bygge_korrekt_json_om_man_velger_ja_paa_tiltak() throws IOException, URISyntaxException {
         val filtervalg = new Filtervalg().setAktiviteter(mapOf(Pair.of("tiltak", AktivitetFiltervalg.JA)));
         val builders = byggAktivitetFilterQuery(filtervalg, boolQuery());
 
@@ -98,7 +99,7 @@ public class ElasticQueryBuilderTest {
     }
 
     @Test
-    public void skal_bygge_korrekt_json_for_aa_hente_ut_brukere_som_er_19_aar_og_under() {
+    public void skal_bygge_korrekt_json_for_aa_hente_ut_brukere_som_er_19_aar_og_under() throws IOException, URISyntaxException {
         val builder = new BoolQueryBuilder();
         byggAlderQuery("19-og-under", builder);
 
@@ -109,7 +110,7 @@ public class ElasticQueryBuilderTest {
     }
 
     @Test
-    public void skal_bygge_korrekt_json_for_aa_hente_ut_brukere_mellom_20_24_aar() {
+    public void skal_bygge_korrekt_json_for_aa_hente_ut_brukere_mellom_20_24_aar() throws IOException, URISyntaxException {
         val builder = new BoolQueryBuilder();
         byggAlderQuery("20-24", builder);
 
@@ -120,7 +121,7 @@ public class ElasticQueryBuilderTest {
     }
 
     @Test
-    public void skal_bygge_korrekt_json_for_aa_hente_ut_portefoljestorrelser() {
+    public void skal_bygge_korrekt_json_for_aa_hente_ut_portefoljestorrelser() throws URISyntaxException, IOException {
         val request = byggPortefoljestorrelserQuery("0000");
 
         val actualJson = request.aggregations().toString();
@@ -129,8 +130,7 @@ public class ElasticQueryBuilderTest {
         assertThat(actualJson).isEqualToIgnoringWhitespace(expectedJson);
     }
 
-    @SneakyThrows
-    private String readFileAsJsonString(String pathname) {
+    private String readFileAsJsonString(String pathname) throws URISyntaxException, IOException {
         val URI = getClass().getResource(pathname).toURI();
         val encodedBytes = Files.readAllBytes(Paths.get(URI));
         return new String(encodedBytes, UTF_8).trim();

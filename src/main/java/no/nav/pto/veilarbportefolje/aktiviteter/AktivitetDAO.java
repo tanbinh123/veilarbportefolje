@@ -2,7 +2,6 @@ package no.nav.pto.veilarbportefolje.aktiviteter;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.pto.veilarbportefolje.arenafiler.gr202.tiltak.Brukertiltak;
 import no.nav.pto.veilarbportefolje.database.Table;
@@ -185,8 +184,7 @@ public class AktivitetDAO {
                 .execute();
     }
 
-    @SneakyThrows
-    public static AktivitetStatus mapAktivitetStatus(ResultSet resultSet) {
+    public static AktivitetStatus mapAktivitetStatus(ResultSet resultSet) throws SQLException {
         return new AktivitetStatus()
                 .setPersonid(PersonId.of(resultSet.getString("PERSONID")))
                 .setAktoerid(AktoerId.of(resultSet.getString("AKTOERID")))
@@ -196,8 +194,7 @@ public class AktivitetDAO {
                 .setNesteUtlop(resultSet.getTimestamp("NESTE_UTLOPSDATO"));
     }
 
-    @SneakyThrows
-    private static Brukertiltak toBrukerTiltak(ResultSet rs) {
+    private static Brukertiltak toBrukerTiltak(ResultSet rs) throws SQLException {
         return Brukertiltak.of(
                 Fnr.of(rs.getString(Table.BRUKERTILTAK.FODSELSNR)),
                 rs.getString(Table.BRUKERTILTAK.TILTAKSKODE),

@@ -2,7 +2,6 @@ package no.nav.pto.veilarbportefolje.krr;
 
 import io.vavr.collection.Stream;
 import io.vavr.control.Option;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.pto.veilarbportefolje.domene.KrrDTO;
 import no.nav.tjeneste.virksomhet.digitalkontaktinformasjon.v1.DigitalKontaktinformasjonV1;
@@ -23,6 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
+import static no.nav.pto.veilarbportefolje.util.ExceptionUtils.sneakyThrows;
 
 @Slf4j
 @Service
@@ -37,7 +37,6 @@ public class KrrService {
         this.digitalKontaktinformasjonV1 = digitalKontaktinformasjonV1;
     }
 
-    @SneakyThrows
     public void hentDigitalKontaktInformasjonBolk() {
         log.info("Indeksering: Starter henting av KRR informasjon...");
         krrRepository.slettKrrInformasjon();
@@ -45,18 +44,19 @@ public class KrrService {
         log.info("Indeksering: Fullført henting av KRR informasjon");
     }
 
-    @SneakyThrows
     void hentDigitalKontaktInformasjon(List<String> fnrListe) {
 
         WSHentDigitalKontaktinformasjonBolkRequest req = new WSHentDigitalKontaktinformasjonBolkRequest().withPersonidentListe(fnrListe);
-        WSHentDigitalKontaktinformasjonBolkResponse res = digitalKontaktinformasjonV1.hentDigitalKontaktinformasjonBolk(req);
+        WSHentDigitalKontaktinformasjonBolkResponse res = sneakyThrows(() -> digitalKontaktinformasjonV1
+                .hentDigitalKontaktinformasjonBolk(req))
+                .orElseThrow();
 
-        List<KrrDTO> Kfoo = mapDigitalKontaktInformasjon(
+        List<KrrDTO> dto = mapDigitalKontaktInformasjon(
                 res.getDigitalKontaktinformasjonListe(),
                 res.getForretningsmessigUnntakListe()
         );
 
-        krrRepository.lagreKRRInformasjon(Kfoo);
+        krrRepository.lagreKRRInformasjon(dto);
     }
 
     private List<KrrDTO> mapDigitalKontaktInformasjon(

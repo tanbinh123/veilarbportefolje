@@ -1,6 +1,5 @@
 package no.nav.pto.veilarbportefolje.oppfolging;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.common.utils.Credentials;
 import no.nav.pto.veilarbportefolje.util.AuthorizationUtils;
@@ -10,6 +9,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 
 import static no.nav.pto.veilarbportefolje.util.AuthorizationUtils.isBasicAuthAuthorized;
@@ -32,8 +32,7 @@ public class ResetOppfolgingFeedServlet extends HttpServlet {
     }
 
     @Override
-    @SneakyThrows
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         final long fromId;
         try {
             fromId = Long.parseLong(req.getParameter("fromId"));

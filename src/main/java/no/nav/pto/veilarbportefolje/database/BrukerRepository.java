@@ -3,13 +3,13 @@ package no.nav.pto.veilarbportefolje.database;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Try;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.pto.veilarbportefolje.database.Table.OPPFOLGINGSBRUKER;
 import no.nav.pto.veilarbportefolje.database.Table.OPPFOLGING_DATA;
 import no.nav.pto.veilarbportefolje.database.Table.VW_PORTEFOLJE_INFO;
 import no.nav.pto.veilarbportefolje.domene.*;
 import no.nav.pto.veilarbportefolje.elastic.domene.OppfolgingsBruker;
+import no.nav.pto.veilarbportefolje.util.ExceptionUtils;
 import no.nav.pto.veilarbportefolje.util.UnderOppfolgingRegler;
 import no.nav.sbl.sql.SqlUtils;
 import no.nav.sbl.sql.where.WhereClause;
@@ -18,7 +18,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -133,16 +135,15 @@ public class BrukerRepository {
         return harOppfolgingsFlaggSatt(rs) || erUnderOppfolgingIArena(rs);
     }
 
-    @SneakyThrows
-    private static boolean erUnderOppfolgingIArena(ResultSet rs) {
-        String formidlingsgruppekode = rs.getString("formidlingsgruppekode");
-        String kvalifiseringsgruppekode = rs.getString("kvalifiseringsgruppekode");
+    private static boolean erUnderOppfolgingIArena(ResultSet resultSet) {
+        String formidlingsgruppekode = ExceptionUtils.sneakyThrows(resultSet, rs -> rs.getString("formidlingsgruppekode")).orElseThrow();
+        String kvalifiseringsgruppekode = ExceptionUtils.sneakyThrows(resultSet, rs -> rs.getString("kvalifiseringsgruppekode")).orElseThrow();
         return UnderOppfolgingRegler.erUnderOppfolging(formidlingsgruppekode, kvalifiseringsgruppekode);
     }
 
-    @SneakyThrows
-    private static boolean harOppfolgingsFlaggSatt(ResultSet rs) {
-        return parseJaNei(rs.getString("OPPFOLGING"), "OPPFOLGING");
+    private static boolean harOppfolgingsFlaggSatt(ResultSet resultSet) {
+        final String oppfolging = ExceptionUtils.sneakyThrows(resultSet, rs -> rs.getString("OPPFOLGING")).orElseThrow();
+        return parseJaNei(oppfolging, "OPPFOLGING");
     }
 
     public Optional<VeilederId> hentVeilederForBruker(AktoerId aktoerId) {
@@ -275,9 +276,10 @@ public class BrukerRepository {
         return brukere;
     }
 
-    @SneakyThrows
-    private static Tuple2<String, String> toFnrIdTuple(ResultSet rs) {
-        return Tuple.of(rs.getString(OPPFOLGINGSBRUKER.FODSELSNR), rs.getString(OPPFOLGINGSBRUKER.PERSON_ID));
+    private static Tuple2<String, String> toFnrIdTuple(ResultSet resultSet) {
+        final String fnr = ExceptionUtils.sneakyThrows(resultSet, rs -> rs.getString(OPPFOLGINGSBRUKER.FODSELSNR)).orElseThrow();
+        final String personId = ExceptionUtils.sneakyThrows(resultSet, rs -> rs.getString(OPPFOLGINGSBRUKER.PERSON_ID)).orElseThrow();
+        return Tuple.of(fnr, personId);
     }
 
     public void setAktiviteterSistOppdatert(Timestamp sistOppdatert) {
@@ -300,33 +302,37 @@ public class BrukerRepository {
     /**
      * MAPPING-FUNKSJONER
      */
-    @SneakyThrows
-    private String mapToEnhet(ResultSet rs) {
-        return rs.getString("NAV_KONTOR");
+    private String mapToEnhet(ResultSet resultSet) {
+        return ExceptionUtils.sneakyThrows(resultSet, rs -> rs.getString("NAV_KONTOR")).orElseThrow();
     }
 
-    @SneakyThrows
-    private VeilederId mapToVeilederId(ResultSet rs) {
-        return VeilederId.of(rs.getString("VEILEDERIDENT"));
+    private VeilederId mapToVeilederId(ResultSet resultSet) {
+        return ExceptionUtils.sneakyThrows(resultSet, rs -> rs.getString("VEILEDERIDENT"))
+                .map(VeilederId::of)
+                .orElseThrow();
     }
 
-    @SneakyThrows
-    private PersonId mapToPersonIdFromAktoerIdToPersonId(ResultSet rs) {
-        return PersonId.of(rs.getString("PERSONID"));
+    private PersonId mapToPersonIdFromAktoerIdToPersonId(ResultSet resultSet) {
+        return ExceptionUtils.sneakyThrows(resultSet, rs -> rs.getString("PERSONID"))
+                .map(PersonId::of)
+                .orElseThrow();
     }
 
-    @SneakyThrows
     private PersonId mapPersonIdFromOppfolgingsbruker(ResultSet resultSet) {
-        return PersonId.of(Integer.toString(resultSet.getBigDecimal("PERSON_ID").intValue()));
+        return ExceptionUtils.sneakyThrows(resultSet, rs -> rs.getBigDecimal("PERSON_ID"))
+                .map(BigDecimal::intValue)
+                .map(i -> Integer.toString(i))
+                .map(PersonId::of)
+                .orElseThrow();
     }
 
-    @SneakyThrows
     private Fnr mapFnrFromOppfolgingsbruker(ResultSet resultSet) {
-        return Fnr.of(resultSet.getString("FODSELSNR"));
+        return ExceptionUtils.sneakyThrows(resultSet, rs -> rs.getString("FODSELSNR"))
+                .map(Fnr::of)
+                .orElseThrow();
     }
 
-    @SneakyThrows
-    public static Brukerdata toBrukerData(ResultSet rs) {
+    public static Brukerdata toBrukerData(ResultSet rs) throws SQLException {
         return new Brukerdata()
                 .setAktoerid(rs.getString("AKTOERID"))
                 .setPersonid(rs.getString("PERSONID"))
