@@ -5,8 +5,6 @@ import no.nav.common.featuretoggle.UnleashService;
 import no.nav.common.health.selftest.SelfTestCheck;
 import no.nav.common.health.selftest.SelfTestChecks;
 import no.nav.common.health.selftest.SelfTestMeterBinder;
-import no.nav.pto.veilarbportefolje.arenafiler.gr199.ytelser.KopierGR199FraArena;
-import no.nav.pto.veilarbportefolje.arenafiler.gr202.tiltak.TiltakHandler;
 import no.nav.pto.veilarbportefolje.domene.AktorClient;
 import no.nav.pto.veilarbportefolje.elastic.ElasticConfig;
 import no.nav.pto.veilarbportefolje.kafka.KafkaConfig;
@@ -29,8 +27,6 @@ public class HelsesjekkConfig {
     @Bean
     public SelfTestChecks selfTestChecks(AktorClient aktorClient,
                                          Pep veilarbPep,
-                                         TiltakHandler tiltakHandler,
-                                         KopierGR199FraArena kopierGR199FraArena,
                                          JdbcTemplate jdbcTemplate,
                                          UnleashService unleashService) {
         List<SelfTestCheck> asyncSelftester = List.of(
@@ -38,8 +34,6 @@ public class HelsesjekkConfig {
                 new SelfTestCheck("Database for portefolje", true, () -> dbPinger(jdbcTemplate)),
                 new SelfTestCheck("Aktorregister", true, aktorClient),
                 new SelfTestCheck("ABAC", true, veilarbPep.getAbacClient()),
-                new SelfTestCheck("Sjekker henting av tiltaksfil fra arena over sftp", true, tiltakHandler::sftpTiltakPing),
-                new SelfTestCheck("Sjekker henting av ytelser-fil fra arena over sftp", true, kopierGR199FraArena::sftpLopendeYtelserPing),
                 new SelfTestCheck("Sjekker at feature-toggles kan hentes fra Unleash", false, unleashService)
         );
 
