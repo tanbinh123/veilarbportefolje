@@ -17,6 +17,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static no.nav.pto.veilarbportefolje.database.PostgresTable.OPPFOLGING_DATA.*;
+import static no.nav.pto.veilarbportefolje.postgres.PostgresUtils.queryForObjectOrNull;
 import static no.nav.pto.veilarbportefolje.util.DateUtils.toTimestamp;
 import static no.nav.pto.veilarbportefolje.util.DateUtils.toZonedDateTime;
 
@@ -40,63 +41,56 @@ public class OppfolgingRepositoryV2 {
         );
     }
 
-    public int settVeileder(AktorId aktorId, VeilederId veilederId) {
-        return SqlUtils.update(db, TABLE_NAME)
-                .set(VEILEDERID, veilederId.getValue())
-                .set(NY_FOR_VEILEDER, true)
-                .whereEquals(AKTOERID, aktorId.get())
-                .execute();
+    public int settVeileder(AktorId aktorId, VeilederId veilederId, boolean ufordelt) {
+        log.info("Setter veileder for bruker: {}, til: {}, ufordelt: {}", aktorId.get(), veilederId.getValue(), ufordelt);
+
+        String sql = String.format("UPDATE %s SET (%s, %s) = (?, ?) WHERE %s = ?", TABLE_NAME, VEILEDERID, ER_UFORDELT, AKTOERID);
+        return db.update(sql, veilederId.getValue(), ufordelt, aktorId.get());
     }
 
     public int settNyForVeileder(AktorId aktoerId, boolean nyForVeileder) {
-        return SqlUtils.update(db, TABLE_NAME)
-                .set(NY_FOR_VEILEDER, nyForVeileder)
-                .whereEquals(AKTOERID, aktoerId.get())
-                .execute();
+        log.info("Setter ny for veileder til: {} for bruker : {}", nyForVeileder, aktoerId.get());
+
+        String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?", TABLE_NAME, NY_FOR_VEILEDER, AKTOERID);
+        return db.update(sql, nyForVeileder, aktoerId.get());
     }
 
     public int settManuellStatus(AktorId aktoerId, boolean manuellStatus) {
-        return SqlUtils.update(db, TABLE_NAME)
-                .set(MANUELL, manuellStatus)
-                .whereEquals(AKTOERID, aktoerId.get())
-                .execute();
+        log.info("Setter ny manuell statusfor bruker: {}, til: {}", aktoerId.get(), manuellStatus);
+
+        String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?", TABLE_NAME, MANUELL, AKTOERID);
+        return db.update(sql, manuellStatus, aktoerId.get());
     }
 
     public int settOppfolgingTilFalse(AktorId aktoerId) {
-        return SqlUtils.update(db, TABLE_NAME)
-                .set(OPPFOLGING, false)
-                .whereEquals(AKTOERID, aktoerId.get())
-                .execute();
+        log.info("Setter oppfolging til false for bruker: {}", aktoerId.get());
+
+        String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?", TABLE_NAME, OPPFOLGING, AKTOERID);
+        return db.update(sql, false, aktoerId.get());
     }
 
     public Optional<ZonedDateTime> hentStartdato(AktorId aktoerId) {
-        final ZonedDateTime startDato = SqlUtils
-                .select(db, TABLE_NAME, rs -> toZonedDateTime(rs.getTimestamp(STARTDATO)))
-                .column(STARTDATO)
-                .where(WhereClause.equals(AKTOERID, aktoerId.get()))
-                .execute();
-
-        return Optional.ofNullable(startDato);
+        String sql = String.format("SELECT %s FROM %s WHERE %s = ?", STARTDATO, TABLE_NAME, AKTOERID);
+        return Optional.ofNullable(
+                queryForObjectOrNull(() -> db.queryForObject(sql, (rs, row) -> toZonedDateTime(rs.getTimestamp(STARTDATO)), aktoerId.get()))
+        );
     }
 
     public void slettOppfolgingData(AktorId aktoerId) {
-        SqlUtils.delete(db, TABLE_NAME)
-                .where(WhereClause.equals(AKTOERID, aktoerId.get()))
-                .execute();
+        log.info("Sletter oppfolgings data for bruker: {}", aktoerId.get());
+        db.update(String.format("DELETE FROM %s WHERE %s = ?", TABLE_NAME, AKTOERID), aktoerId.get());
     }
 
     public Optional<BrukerOppdatertInformasjon> hentOppfolgingData(AktorId aktoerId) {
-        final BrukerOppdatertInformasjon oppfolging = SqlUtils.select(db, TABLE_NAME, this::mapToBrukerOppdatertInformasjon)
-                .column("*")
-                .where(WhereClause.equals(AKTOERID, aktoerId.get()))
-                .execute();
-
-        return Optional.ofNullable(oppfolging);
+        String sql = String.format("SELECT * FROM %s WHERE %s = ?", TABLE_NAME, AKTOERID);
+        return Optional.ofNullable(
+                queryForObjectOrNull(() -> db.queryForObject(sql, this::mapToBrukerOppdatertInformasjon, aktoerId.get()))
+        );
     }
 
     @SneakyThrows
-    private BrukerOppdatertInformasjon mapToBrukerOppdatertInformasjon(ResultSet rs) {
-        if(rs == null || rs.getString(AKTOERID) == null){
+    private BrukerOppdatertInformasjon mapToBrukerOppdatertInformasjon(ResultSet rs, int row) {
+        if (rs == null || rs.getString(AKTOERID) == null) {
             return null;
         }
         return new BrukerOppdatertInformasjon()

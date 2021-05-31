@@ -39,7 +39,7 @@ public class VeilederTilordnetService implements KafkaConsumerService<String> {
 
         oppfolgingRepository.settVeileder(aktoerId, dto.getVeilederId());
         if (erPostgresPa(unleashService)) {
-            oppfolgingRepositoryV2.settVeileder(aktoerId, dto.getVeilederId());
+            oppfolgingRepositoryV2.settVeileder(aktoerId, dto.getVeilederId(), true);
         }
 
         elasticServiceV2.oppdaterVeileder(aktoerId, dto.getVeilederId());

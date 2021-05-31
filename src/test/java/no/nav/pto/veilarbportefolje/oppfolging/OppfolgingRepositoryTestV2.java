@@ -47,7 +47,7 @@ public class OppfolgingRepositoryTestV2 {
     public void skal_sette_ny_veileder() {
         VeilederId veilederId = VeilederId.of("Z12345");
         oppfolgingRepository.settUnderOppfolging(aktoerId, ZonedDateTime.now());
-        oppfolgingRepository.settVeileder(aktoerId, veilederId);
+        oppfolgingRepository.settVeileder(aktoerId, veilederId, true);
 
         BrukerOppdatertInformasjon brukerOppdatertInformasjon = oppfolgingRepository.hentOppfolgingData(aktoerId).get();
         assertThat(VeilederId.of(brukerOppdatertInformasjon.getVeileder())).isEqualTo(veilederId);

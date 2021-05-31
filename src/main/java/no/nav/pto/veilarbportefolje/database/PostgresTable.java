@@ -11,6 +11,7 @@ public class PostgresTable {
         public static final String NY_FOR_VEILEDER = "NY_FOR_VEILEDER";
         public static final String VEILEDERID = "VEILEDERID";
         public static final String MANUELL = "MANUELL";
+        public static final String ER_UFORDELT = "ER_UFORDELT";
         public static final String FODSELSNR = "FODSELSNR";
         public static final String FODSELS_DATO = "FODSELS_DATO";
         public static final String KJONN = "KJONN";
@@ -50,6 +51,7 @@ public class PostgresTable {
         public static final String STARTDATO = "STARTDATO";
         public static final String NY_FOR_VEILEDER = "NY_FOR_VEILEDER";
         public static final String VEILEDERID = "VEILEDERID";
+        public static final String ER_UFORDELT = "ER_UFORDELT";
         public static final String FODSELSNR = "FODSELSNR";
         public static final String FORNAVN = "FORNAVN";
         public static final String ETTERNAVN = "ETTERNAVN";
@@ -66,6 +68,7 @@ public class PostgresTable {
         public static final String NY_FOR_VEILEDER = "NY_FOR_VEILEDER";
         public static final String MANUELL = "MANUELL";
         public static final String STARTDATO = "STARTDATO";
+        public static final String ER_UFORDELT = "ER_UFORDELT";
     }
 
     public static final class OPPFOLGINGSBRUKER_ARENA {
