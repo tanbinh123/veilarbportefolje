@@ -211,11 +211,11 @@ public class Bruker {
         }
     }
 
-    public Bruker fraEssensiellInfo(Map<String, Object> row) {
+    public static Bruker fraEssensiellInfo(Map<String, Object> row) {
         String diskresjonskode = (String) row.get(DISKRESJONSKODE);
         String formidlingsgruppekode = (String) row.get(FORMIDLINGSGRUPPEKODE);
 
-        return setNyForVeileder((boolean) row.get(NY_FOR_VEILEDER))
+        return new Bruker().setNyForVeileder((boolean) row.get(NY_FOR_VEILEDER))
                 .setVeilederId((String) row.get(VEILEDERID))
                 .setDiskresjonskode((String) row.get(DISKRESJONSKODE))
                 .setFnr((String) row.get(FODSELSNR))
@@ -226,7 +226,7 @@ public class Bruker {
 
     }
 
-    public Bruker fraBrukerView(Map<String, Object> row) {
+    public static Bruker fraBrukerView(Map<String, Object> row) {
         String diskresjonskode = (String) row.get(DISKRESJONSKODE);
         String kvalifiseringsgruppekode = (String) row.get(KVALIFISERINGSGRUPPEKODE);
         String formidlingsgruppekode = (String) row.get(FORMIDLINGSGRUPPEKODE);
@@ -235,7 +235,7 @@ public class Bruker {
         boolean trengerVurdering = OppfolgingUtils.trengerVurdering(formidlingsgruppekode, kvalifiseringsgruppekode);
         boolean trengerRevurdering = OppfolgingUtils.trengerRevurderingVedtakstotte(formidlingsgruppekode, kvalifiseringsgruppekode, vedtakstatus);
         boolean erSykmeldtMedArbeidsgiver = OppfolgingUtils.erSykmeldtMedArbeidsgiver(formidlingsgruppekode, kvalifiseringsgruppekode);
-        return setFnr((String) row.get(FODSELSNR))
+        return new Bruker().setFnr((String) row.get(FODSELSNR))
                 .setNyForVeileder(PostgresUtils.safeBool((boolean) row.get(NY_FOR_VEILEDER)))
                 .setTrengerVurdering(trengerVurdering)
                 .setErSykmeldtMedArbeidsgiver(erSykmeldtMedArbeidsgiver) // Etiketten sykemeldt ska vises oavsett om brukeren har ett påbegynnt vedtak eller ej;

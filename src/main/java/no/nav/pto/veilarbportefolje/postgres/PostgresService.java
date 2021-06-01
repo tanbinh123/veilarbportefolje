@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import static java.lang.Integer.parseInt;
@@ -31,7 +30,7 @@ public class PostgresService {
     }
 
     public BrukereMedAntall hentBrukere(String enhetId, String veilederIdent, String sortOrder, String sortField, Filtervalg filtervalg, Integer fra, Integer antall) {
-        List<String> veiledereMedTilgangTilEnhet = veilarbVeilederClient.hentVeilederePaaEnhet(EnhetId.of(enhetId));
+        veilarbVeilederClient.oppdaterUfordelteBrukerePaEnhetCached(EnhetId.of(enhetId));
         boolean vedtaksPilot = erVedtakstottePilotPa(EnhetId.of(enhetId));
 
         PostgresQueryBuilder query = new PostgresQueryBuilder(jdbcTemplate, enhetId);
@@ -43,7 +42,7 @@ public class PostgresService {
         if (filtervalg.harAktiveFilter()) {
             if(filtervalg.harFerdigFilter()) {
                 filtervalg.ferdigfilterListe.forEach(
-                        filter -> leggTilFerdigFilter(query, filter, veiledereMedTilgangTilEnhet, vedtaksPilot)
+                        filter -> leggTilFerdigFilter(query, filter, vedtaksPilot)
                 );
             }
             leggTilManuelleFilter(query, filtervalg);
@@ -109,11 +108,10 @@ public class PostgresService {
     }
 
 
-    static QueryBuilder leggTilFerdigFilter(PostgresQueryBuilder query, Brukerstatus brukerStatus, List<String> veiledereMedTilgangTilEnhet, boolean erVedtakstottePilotPa) {
-        LocalDate localDate = LocalDate.now();
+    static QueryBuilder leggTilFerdigFilter(PostgresQueryBuilder query, Brukerstatus brukerStatus, boolean erVedtakstottePilotPa) {
         switch (brukerStatus) {
             case UFORDELTE_BRUKERE:
-                query.ufordeltBruker(veiledereMedTilgangTilEnhet);
+                query.ufordeltBruker();
                 break;
             case NYE_BRUKERE_FOR_VEILEDER:
                 query.nyForVeileder();

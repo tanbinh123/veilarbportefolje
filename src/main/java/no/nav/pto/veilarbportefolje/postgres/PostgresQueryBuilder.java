@@ -44,7 +44,7 @@ public class PostgresQueryBuilder {
         if (resultat.size() <= fra) {
             avskjertResultat = new LinkedList<>();
         } else {
-            int tilIndex = (resultat.size() <= fra + antall) ? resultat.size() : fra + antall;
+            int tilIndex = Math.min(resultat.size(), fra + antall);
             avskjertResultat = resultat.subList(fra, tilIndex)
                     .stream()
                     .map(this::mapTilBruker)
@@ -76,13 +76,8 @@ public class PostgresQueryBuilder {
         whereStatement.add(eq(VEILEDERID, veilederId));
     }
 
-    public void ufordeltBruker(List<String> veiledereMedTilgangTilEnhet) {
-        StringJoiner veiledere = new StringJoiner(", ", "(" + VEILEDERID + " IS NULL OR " + VEILEDERID + " NOT IN (", "))");
-        for (String s : veiledereMedTilgangTilEnhet) {
-            veiledere.add("'" + s + "'");
-        }
-
-        whereStatement.add(veiledere.toString());
+    public void ufordeltBruker() {
+        whereStatement.add(ER_UFORDELT + " = TRUE");
     }
 
     public void nyForVeileder() {
@@ -156,28 +151,27 @@ public class PostgresQueryBuilder {
     }
 
     private void alderFilter(String alder, StringJoiner orStatement){
-        var today = LocalDate.now();
+        LocalDate today = LocalDate.now();
+        int fraAlder, tilAlder;
         if ("19-og-under".equals(alder)) {
-            LocalDate nittenOgUnder = today.minusYears(20).minusDays(1);
-            orStatement.add(FODSELS_DATO + " >= '" + nittenOgUnder.toString() + "'::date");
+            fraAlder = 0;
+            tilAlder = 19;
         } else {
             String[] fraTilAlder = alder.split("-");
-            int fraAlder = parseInt(fraTilAlder[0]);
-            int tilAlder = parseInt(fraTilAlder[1]);
-            LocalDate nyesteFodselsdag = today.minusYears(fraAlder);
-            LocalDate eldsteFodselsDag = today.minusYears(tilAlder + 1).plusDays(1);
-
-            orStatement.add("("+FODSELS_DATO + " <= '" + nyesteFodselsdag.toString() + "'::date AND "+FODSELS_DATO + " >= '" + eldsteFodselsDag.toString() + "'::date"+")");
+            fraAlder = parseInt(fraTilAlder[0]);
+            tilAlder = parseInt(fraTilAlder[1]);
         }
+        LocalDate nyesteFodselsdag = today.minusYears(fraAlder);
+        LocalDate eldsteFodselsDag = today.minusYears(tilAlder + 1).plusDays(1);
+        orStatement.add("("+FODSELS_DATO + " >= '" + eldsteFodselsDag.toString() + "'::date AND "+FODSELS_DATO + " <= '" + nyesteFodselsdag.toString() + "'::date"+")");
     }
 
     @SneakyThrows
     private Bruker mapTilBruker(Map<String, Object> row) {
-        Bruker bruker = new Bruker();
         if (brukKunEssensiellInfo) {
-            return bruker.fraEssensiellInfo(row);
+            return Bruker.fraEssensiellInfo(row);
         } else {
-            return bruker.fraBrukerView(row);
+            return Bruker.fraBrukerView(row);
         }
     }
 

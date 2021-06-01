@@ -50,11 +50,6 @@ public class ClientConfig {
     }
 
     @Bean
-    public VeilarbVeilederClient veilarbVeilederClient(EnvironmentProperties environmentProperties) {
-        return new VeilarbVeilederClient(environmentProperties);
-    }
-
-    @Bean
     public VedtakstottePilotRequest vedtakstottePilotRequest() {
         return new VedtakstottePilotRequest();
     }

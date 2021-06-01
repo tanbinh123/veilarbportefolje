@@ -41,11 +41,18 @@ public class OppfolgingRepositoryV2 {
         );
     }
 
-    public int settVeileder(AktorId aktorId, VeilederId veilederId, boolean ufordelt) {
-        log.info("Setter veileder for bruker: {}, til: {}, ufordelt: {}", aktorId.get(), veilederId.getValue(), ufordelt);
+    public int settVeileder(AktorId aktorId, VeilederId veilederId) {
+        log.info("Setter veileder for bruker: {}, til: {}, ufordelt: {}", aktorId.get(), veilederId.getValue());
 
-        String sql = String.format("UPDATE %s SET (%s, %s) = (?, ?) WHERE %s = ?", TABLE_NAME, VEILEDERID, ER_UFORDELT, AKTOERID);
-        return db.update(sql, veilederId.getValue(), ufordelt, aktorId.get());
+        String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?", TABLE_NAME, VEILEDERID, AKTOERID);
+        return db.update(sql, veilederId.getValue(), aktorId.get());
+    }
+
+    public int settUfordeltStatus(AktorId aktoerId, boolean ufordelt) {
+        log.info("Setter ny ufordelt status for bruker: {}, til: {}", aktoerId.get(), ufordelt);
+
+        String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?", TABLE_NAME, ER_UFORDELT, AKTOERID);
+        return db.update(sql, ufordelt, aktoerId.get());
     }
 
     public int settNyForVeileder(AktorId aktoerId, boolean nyForVeileder) {
@@ -56,7 +63,7 @@ public class OppfolgingRepositoryV2 {
     }
 
     public int settManuellStatus(AktorId aktoerId, boolean manuellStatus) {
-        log.info("Setter ny manuell statusfor bruker: {}, til: {}", aktoerId.get(), manuellStatus);
+        log.info("Setter ny manuell status for bruker: {}, til: {}", aktoerId.get(), manuellStatus);
 
         String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?", TABLE_NAME, MANUELL, AKTOERID);
         return db.update(sql, manuellStatus, aktoerId.get());
@@ -74,6 +81,13 @@ public class OppfolgingRepositoryV2 {
         return Optional.ofNullable(
                 queryForObjectOrNull(() -> db.queryForObject(sql, (rs, row) -> toZonedDateTime(rs.getTimestamp(STARTDATO)), aktoerId.get()))
         );
+    }
+
+    public boolean hentUfordeltStatus(AktorId aktorId) {
+        String sql = String.format("SELECT %s FROM %s WHERE %s = ?", ER_UFORDELT, TABLE_NAME, AKTOERID);
+        return Optional.ofNullable(
+                queryForObjectOrNull(() -> db.queryForObject(sql, (rs, row) -> rs.getBoolean(ER_UFORDELT), aktorId.get()))
+        ).orElse(true);
     }
 
     public void slettOppfolgingData(AktorId aktoerId) {
