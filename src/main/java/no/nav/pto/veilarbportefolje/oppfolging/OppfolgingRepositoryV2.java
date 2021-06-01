@@ -5,8 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import no.nav.common.types.identer.AktorId;
 import no.nav.pto.veilarbportefolje.domene.BrukerOppdatertInformasjon;
 import no.nav.pto.veilarbportefolje.domene.value.VeilederId;
-import no.nav.sbl.sql.SqlUtils;
-import no.nav.sbl.sql.where.WhereClause;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -48,11 +46,14 @@ public class OppfolgingRepositoryV2 {
         return db.update(sql, veilederId.getValue(), aktorId.get());
     }
 
-    public int settUfordeltStatus(AktorId aktoerId, boolean ufordelt) {
-        log.info("Setter ny ufordelt status for bruker: {}, til: {}", aktoerId.get(), ufordelt);
+    public int settUfordeltStatus(String aktoerId, boolean ufordelt) {
+        if(aktoerId == null){
+            return 0;
+        }
+        log.info("Setter ny ufordelt status for bruker: {}, til: {}", aktoerId, ufordelt);
 
         String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?", TABLE_NAME, ER_UFORDELT, AKTOERID);
-        return db.update(sql, ufordelt, aktoerId.get());
+        return db.update(sql, ufordelt, aktoerId);
     }
 
     public int settNyForVeileder(AktorId aktoerId, boolean nyForVeileder) {

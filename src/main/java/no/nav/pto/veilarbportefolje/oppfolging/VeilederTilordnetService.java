@@ -71,7 +71,7 @@ public class VeilederTilordnetService implements KafkaConsumerService<String> {
 
     private void settUfordeltStatus(AktorId aktorId, EnhetId enhetId, VeilederId veilederId){
         List<String> veilederePaaEnhet = veilarbVeilederClient.hentVeilederePaaEnhet(enhetId);
-        oppfolgingRepositoryV2.settUfordeltStatus(aktorId, veilederePaaEnhet.contains(veilederId.getValue()));
+        oppfolgingRepositoryV2.settUfordeltStatus(aktorId.get(), veilederePaaEnhet.contains(veilederId.getValue()));
     }
 
     @Override

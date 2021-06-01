@@ -16,6 +16,7 @@ import no.nav.pto.veilarbportefolje.client.VeilarbVeilederClient;
 import no.nav.pto.veilarbportefolje.cv.CVServiceFromAiven;
 import no.nav.pto.veilarbportefolje.cv.CvRepository;
 import no.nav.pto.veilarbportefolje.database.BrukerRepository;
+import no.nav.pto.veilarbportefolje.database.BrukerRepositoryV2;
 import no.nav.pto.veilarbportefolje.database.PersistentOppdatering;
 import no.nav.pto.veilarbportefolje.dialog.DialogRepository;
 import no.nav.pto.veilarbportefolje.dialog.DialogRepositoryV2;
@@ -105,7 +106,8 @@ import static org.mockito.Mockito.when;
         MalService.class,
         OppfolgingService.class,
         ArbeidslisteRepositoryV1.class,
-        ArbeidslisteRepositoryV2.class
+        ArbeidslisteRepositoryV2.class,
+        BrukerRepositoryV2.class
 })
 public class ApplicationConfigTest {
 
