@@ -6,6 +6,7 @@ import no.nav.common.sts.SystemUserTokenProvider;
 import no.nav.common.utils.Credentials;
 import no.nav.common.utils.IdUtils;
 import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetDAO;
+import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetRepositoryV2;
 import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetService;
 import no.nav.pto.veilarbportefolje.arbeidsliste.ArbeidslisteRepositoryV1;
 import no.nav.pto.veilarbportefolje.arbeidsliste.ArbeidslisteRepositoryV2;
@@ -105,7 +106,8 @@ import static org.mockito.Mockito.when;
         MalService.class,
         OppfolgingService.class,
         ArbeidslisteRepositoryV1.class,
-        ArbeidslisteRepositoryV2.class
+        ArbeidslisteRepositoryV2.class,
+        AktivitetRepositoryV2.class
 })
 public class ApplicationConfigTest {
 
@@ -199,11 +201,15 @@ public class ApplicationConfigTest {
         return TestUtil.setupInMemoryDatabase();
     }
 
-
     @Bean
     @Primary
     public JdbcTemplate jdbcTemplate(DataSource dataSource) {
         return new JdbcTemplate(dataSource);
+    }
+
+    @Bean("PostgresJdbc")
+    public JdbcTemplate jdbcTemplatePostgres() {
+        return SingletonPostgresContainer.init().createJdbcTemplate();
     }
 
     @Bean

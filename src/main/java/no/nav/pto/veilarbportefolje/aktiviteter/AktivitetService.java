@@ -28,7 +28,6 @@ public class AktivitetService implements KafkaConsumerService<String> {
     private final AktivitetDAO aktivitetDAO;
     private final AktivitetRepositoryV2 aktivitetRepositoryV2;
     private final PersistentOppdatering persistentOppdatering;
-    private final AtomicBoolean rewind;
     private final SisteEndringService sisteEndringService;
     private final AtomicBoolean rewind = new AtomicBoolean();
 

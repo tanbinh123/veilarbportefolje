@@ -192,6 +192,20 @@ public class PostgresTable {
                         ", " + ENDRET_TIDSPUNKT;
     }
 
+    public static final class AKTIVITETER {
+        public static final String TABLE_NAME = "AKTIVITETER";
+
+        public static final String AKTIVITETID = "AKTIVITETID";
+        public static final String AKTOERID = "AKTOERID";
+        public static final String AKTIVITETTYPE = "AKTIVITETTYPE";
+        public static final String AVTALT = "AVTALT";
+        public static final String FRADATO = "FRADATO";
+        public static final String TILDATO = "TILDATO";
+        public static final String OPPDATERTDATO = "OPPDATERTDATO";
+        public static final String STATUS = "STATUS";
+        public static final String VERSION = "VERSION";
+    }
+
     public static String safeNull(Object o) {
         if (o == null) {
             return "NULL";
