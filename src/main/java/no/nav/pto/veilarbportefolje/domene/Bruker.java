@@ -256,7 +256,9 @@ public class Bruker {
                 .setAnsvarligVeilederForVedtak((String) row.get(VEDTAKSTATUS_ANSVARLIG_VEILDERNAVN))
                 .setOppfolgingStartdato(toLocalDateTimeOrNull((Timestamp) row.get(STARTDATO)))
                 .setTrengerRevurdering(trengerRevurdering)
-                .setArbeidsliste(Arbeidsliste.of(row));
+                .setArbeidsliste(Arbeidsliste.of(row))
+                .setMoteStartTid(null)
+                .setMoteSluttTid(null);
         //TODO: utledd manuell
     }
 

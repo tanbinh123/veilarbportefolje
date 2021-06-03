@@ -1,5 +1,6 @@
 package no.nav.pto.veilarbportefolje.aktiviteter;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.pto.veilarbportefolje.database.PersistentOppdatering;
 import no.nav.common.types.identer.AktorId;
@@ -20,22 +21,16 @@ import static no.nav.pto.veilarbportefolje.util.BatchConsumer.batchConsumer;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AktivitetService implements KafkaConsumerService<String> {
 
     private final BrukerService brukerService;
     private final AktivitetDAO aktivitetDAO;
+    private final AktivitetRepositoryV2 aktivitetRepositoryV2;
     private final PersistentOppdatering persistentOppdatering;
     private final AtomicBoolean rewind;
     private final SisteEndringService sisteEndringService;
-
-    @Autowired
-    public AktivitetService(AktivitetDAO aktivitetDAO, PersistentOppdatering persistentOppdatering, BrukerService brukerService, SisteEndringService sisteEndringService) {
-        this.aktivitetDAO = aktivitetDAO;
-        this.brukerService = brukerService;
-        this.persistentOppdatering = persistentOppdatering;
-        this.sisteEndringService = sisteEndringService;
-        this.rewind = new AtomicBoolean();
-    }
+    private final AtomicBoolean rewind = new AtomicBoolean();
 
     @Override
     public void behandleKafkaMelding(String kafkaMelding) {
@@ -53,6 +48,7 @@ public class AktivitetService implements KafkaConsumerService<String> {
         }
 
         aktivitetDAO.tryLagreAktivitetData(aktivitetData);
+        aktivitetRepositoryV2.lagreAktivitetData(aktivitetData);
         utledOgIndekserAktivitetstatuserForAktoerid(AktorId.of(aktivitetData.getAktorId()));
     }
 
