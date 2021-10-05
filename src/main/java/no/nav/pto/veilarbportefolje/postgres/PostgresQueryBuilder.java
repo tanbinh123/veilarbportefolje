@@ -5,7 +5,10 @@ import net.logstash.logback.encoder.org.apache.commons.lang3.StringUtils;
 import no.nav.pto.veilarbportefolje.database.PostgresTable;
 import no.nav.pto.veilarbportefolje.domene.Bruker;
 import no.nav.pto.veilarbportefolje.domene.BrukereMedAntall;
+import no.nav.pto.veilarbportefolje.domene.Filtervalg;
 import no.nav.pto.veilarbportefolje.domene.Kjonn;
+import no.nav.pto.veilarbportefolje.postgres.sort.PostgresSortQueryBuilder;
+import no.nav.pto.veilarbportefolje.postgres.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -21,7 +24,8 @@ import static java.util.stream.Collectors.toList;
 import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_VIEW.*;
 
 public class PostgresQueryBuilder {
-    private final StringJoiner whereStatement = new StringJoiner(" AND ", " WHERE ", ";");
+    private final StringJoiner whereStatement = new StringJoiner(" AND ", " WHERE ", "");
+    private final PostgresSortQueryBuilder postgresSortQueryBuilder;
     private final JdbcTemplate db;
     private boolean vedtaksPilot;
     private boolean brukKunEssensiellInfo = true;
@@ -29,6 +33,7 @@ public class PostgresQueryBuilder {
     public PostgresQueryBuilder(@Qualifier("PostgresJdbc") JdbcTemplate jdbcTemplate, String navKontor, boolean vedtaksPilot) {
         this.db = jdbcTemplate;
         this.vedtaksPilot = vedtaksPilot;
+        postgresSortQueryBuilder = new PostgresSortQueryBuilder();
         whereStatement.add(eq(NAV_KONTOR, navKontor));
         whereStatement.add(eq(OPPFOLGING, true));
 
@@ -37,9 +42,9 @@ public class PostgresQueryBuilder {
     public BrukereMedAntall search(Integer fra, Integer antall) {
         List<Map<String, Object>> resultat;
         if (brukKunEssensiellInfo) {
-            resultat = db.queryForList("SELECT * FROM " + PostgresTable.OPTIMALISER_BRUKER_VIEW.TABLE_NAME + whereStatement.toString());
+            resultat = db.queryForList("SELECT * FROM " + PostgresTable.OPTIMALISER_BRUKER_VIEW.TABLE_NAME + whereStatement + postgresSortQueryBuilder.getSortStatement());
         } else {
-            resultat = db.queryForList("SELECT * FROM " + TABLE_NAME + whereStatement.toString());
+            resultat = db.queryForList("SELECT * FROM " + TABLE_NAME + whereStatement + postgresSortQueryBuilder.getSortStatement());
         }
 
         List<Bruker> avskjertResultat;
@@ -54,6 +59,11 @@ public class PostgresQueryBuilder {
         }
 
         return new BrukereMedAntall(resultat.size(), avskjertResultat);
+    }
+
+    public void sorterQueryParametere(String sortOrder, String sortField, Filtervalg filtervalg, boolean kallesFraMinOversikt) {
+        SortOrder order = "ascending".equals(sortOrder) ? SortOrder.ASC : SortOrder.DESC;
+        postgresSortQueryBuilder.createSortStatements(sortField, order, filtervalg, kallesFraMinOversikt);
     }
 
     public <T> void leggTilListeFilter(List<T> filtervalgsListe, String columnName) {
@@ -76,6 +86,10 @@ public class PostgresQueryBuilder {
 
     public void minOversiktFilter(String veilederId) {
         whereStatement.add(eq(VEILEDERID, veilederId));
+    }
+
+    public void enhetOversiktFilter(List<String> veiledereMedTilgangTilEnhet) {
+        whereStatement.add(contains(VEILEDERID, veiledereMedTilgangTilEnhet));
     }
 
     public void ufordeltBruker(List<String> veiledereMedTilgangTilEnhet) {
@@ -205,5 +219,10 @@ public class PostgresQueryBuilder {
     private String eq(String kolonne, int verdi) {
         return kolonne + " = " + verdi;
     }
+
+    private String contains(String kolonne, List<String> verdier) {
+        return kolonne + " IN " + verdier.stream().collect(Collectors.joining(",", "(", ")"));
+    }
+
 
 }

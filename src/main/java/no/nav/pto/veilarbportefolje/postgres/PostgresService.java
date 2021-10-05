@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +43,10 @@ public class PostgresService {
         boolean kallesFraMinOversikt = StringUtils.isNotBlank(veilederIdent);
         if (kallesFraMinOversikt) {
             query.minOversiktFilter(veilederIdent);
+        } else {
+            query.enhetOversiktFilter(veiledereMedTilgangTilEnhet);
         }
+
         if (filtervalg.harAktiveFilter()) {
             if (filtervalg.harFerdigFilter()) {
                 filtervalg.ferdigfilterListe.forEach(
@@ -54,6 +56,7 @@ public class PostgresService {
             leggTilManuelleFilter(query, filtervalg);
         }
 
+        query.sorterQueryParametere(sortField, sortOrder, filtervalg, kallesFraMinOversikt);
         return query.search(fra, antall);
     }
 
@@ -74,6 +77,7 @@ public class PostgresService {
         query.leggTilListeFilter(filtervalg.utdanningGodkjent, PostgresTable.BRUKER_VIEW.UTDANNING_GODKJENT);
 
         /*
+        byggManuellFilter(filtervalg.manuellBrukerStatus, queryBuilder, "manuell_bruker");
         byggManuellFilter(filtervalg.tiltakstyper, queryBuilder, "tiltak");
         byggManuellFilter(filtervalg.aktiviteterForenklet, queryBuilder, "aktiviteter");
         */
@@ -91,9 +95,9 @@ public class PostgresService {
         }
 
         if (filtervalg.harCvFilter()) {
-            if(filtervalg.cvJobbprofil.equals(CVjobbprofil.HAR_DELT_CV)){
+            if (filtervalg.cvJobbprofil.equals(CVjobbprofil.HAR_DELT_CV)) {
                 query.harDeltCvFilter();
-            } else if(filtervalg.cvJobbprofil.equals(CVjobbprofil.HAR_IKKE_DELT_CV)) {
+            } else if (filtervalg.cvJobbprofil.equals(CVjobbprofil.HAR_IKKE_DELT_CV)) {
                 query.harIkkeDeltCvFilter();
             }
         }
@@ -122,7 +126,6 @@ public class PostgresService {
 
 
     static QueryBuilder leggTilFerdigFilter(PostgresQueryBuilder query, Brukerstatus brukerStatus, List<String> veiledereMedTilgangTilEnhet, boolean erVedtakstottePilotPa) {
-        LocalDate localDate = LocalDate.now();
         switch (brukerStatus) {
             case UFORDELTE_BRUKERE:
                 query.ufordeltBruker(veiledereMedTilgangTilEnhet);
