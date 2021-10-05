@@ -221,7 +221,7 @@ public class PostgresQueryBuilder {
     }
 
     private String contains(String kolonne, List<String> verdier) {
-        return kolonne + " IN " + verdier.stream().map(v -> "'" + v + "'").collect(Collectors.joining(",", "(", ")"));
+        return kolonne + " IN " + verdier.stream().collect(Collectors.joining(",", "(", ")"));
     }
 
 

@@ -56,7 +56,7 @@ public class PostgresService {
             leggTilManuelleFilter(query, filtervalg);
         }
 
-        query.sorterQueryParametere(sortOrder, sortField, filtervalg, kallesFraMinOversikt);
+        query.sorterQueryParametere(sortField, sortOrder, filtervalg, kallesFraMinOversikt);
         return query.search(fra, antall);
     }
 
