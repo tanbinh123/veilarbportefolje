@@ -1,7 +1,6 @@
 package no.nav.pto.veilarbportefolje.postgres.sort;
 
 import no.nav.pto.veilarbportefolje.domene.Filtervalg;
-import no.nav.pto.veilarbportefolje.util.ValideringsRegler;
 
 import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_VIEW.*;
 
@@ -11,57 +10,79 @@ public class PostgresSortQueryBuilder {
     public void createSortStatements(String sortField, SortOrder order, Filtervalg filtervalg, boolean kallesFraMinOversikt) {
         if ("ikke_satt".equals(sortField)) {
             sortStatement.add(AKTOERID, SortOrder.ASC);
+            return;
         }
         if (kallesFraMinOversikt) {
             sortStatement.add(NY_FOR_VEILEDER, SortOrder.DESC);
         }
 
         switch (sortField) {
-            case "valgteaktiviteter":
-                //sorterValgteAktiviteter(filtervalg, searchSourceBuilder, order);
+            case "aapmaxtiduke":
                 break;
-            case "moterMedNAVIdag":
-                //sortStatement.add("aktivitet_mote_startdato", order);
+            case "aaprettighetsperiode":
                 break;
-            case "iavtaltaktivitet":
-                /*FieldSortBuilder builder = new FieldSortBuilder("aktivitet_utlopsdatoer")
-                        .order(order)
-                        .sortMode(MIN);
-                */
+            case "aapunntakukerigjen":
+                break;
+            case "aktivitet_start":
+                break;
+            case "ansvarlig_veileder_for_vedtak":
+                sortStatement.add(VEDTAKSTATUS_ANSVARLIG_VEILDERNAVN, order);
+                break;
+            case "arbeidsliste_overskrift":
+                break;
+            case "arbeidslistefrist":
+                sortStatement.add(ARB_FRIST, order);
+                break;
+            case "arbeidslistekategori":
+                sortStatement.add(ARB_KATEGORI, order);
+                break;
+            case "dagputlopuke":
+                break;
+            case "etternavn":
+                sortStatement.add(ETTERNAVN, order);
                 break;
             case "fodselsnummer":
                 sortStatement.add(FODSELSNR, order);
                 break;
+            case "forrige_aktivitet_start":
+                break;
+            case "iavtaltaktivitet":
+                break;
+            case "moterMedNAVIdag":
+                break;
+            case "neste_aktivitet_start":
+                break;
+            case "oppfolging_startdato":
+                sortStatement.add(STARTDATO, order);
+                break;
+            case "permutlopuke":
+                break;
+            case "siste_endring_tidspunkt":
+                break;
+            case "utlopsdato":
+                break;
             case "utlopteaktiviteter":
-                //searchSourceBuilder.sort("nyesteutlopteaktivitet", order);
                 break;
-            case "arbeidslistefrist":
-                //searchSourceBuilder.sort("arbeidsliste_frist", order);
+            case "valgteaktiviteter":
                 break;
-            case "aaprettighetsperiode":
-                //sorterAapRettighetsPeriode(searchSourceBuilder, order);
+            case "vedtak_status_endret":
+                //@todo: is it necessary to convert this field from timestamp to string
+                sortStatement.add(VEDTAKSTATUS_ENDRET_TIDSPUNKT, order);
                 break;
             case "vedtakstatus":
                 sortStatement.add(VEDTAKSTATUS, order);
                 break;
-            case "arbeidslistekategori":
-                //searchSourceBuilder.sort("arbeidsliste_kategori", order);
+            case "veileder_id":
+                sortStatement.add(VEILEDERID, order);
                 break;
-            case "siste_endring_tidspunkt":
-                //sorterSisteEndringTidspunkt(searchSourceBuilder, order, filtervalg);
+            case "venterpasvarfrabruker":
+                
                 break;
-            default:
-                defaultSort(sortField, order);
+            case "venterpasvarfranav":
+                break;
         }
-        addSecondarySort();
-    }
 
-    private void defaultSort(String sortField, SortOrder order) {
-        if (ValideringsRegler.sortFields.contains(sortField)) {
-            //sortStatement.add(sortField, order);
-        } else {
-            throw new IllegalStateException();
-        }
+        addSecondarySort();
     }
 
     private void addSecondarySort() {
