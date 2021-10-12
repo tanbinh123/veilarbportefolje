@@ -2,13 +2,15 @@ package no.nav.pto.veilarbportefolje.postgres.sort;
 
 import no.nav.pto.veilarbportefolje.domene.Filtervalg;
 
+import java.util.Objects;
+
 import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_VIEW.*;
 
 public class PostgresSortQueryBuilder {
     private final SortJoiner sortStatement = new SortJoiner(" ORDER BY ", ",", ";");
 
     public void createSortStatements(String sortField, SortOrder order, Filtervalg filtervalg, boolean kallesFraMinOversikt) {
-        if ("ikke_satt".equals(sortField)) {
+        if (Objects.isNull(sortField) || sortField.equals("ikke_satt")) {
             sortStatement.add(AKTOERID, SortOrder.ASC);
             return;
         }
@@ -76,7 +78,7 @@ public class PostgresSortQueryBuilder {
                 sortStatement.add(VEILEDERID, order);
                 break;
             case "venterpasvarfrabruker":
-                
+
                 break;
             case "venterpasvarfranav":
                 break;

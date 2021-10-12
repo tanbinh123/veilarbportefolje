@@ -17,7 +17,7 @@ import no.nav.pto.veilarbportefolje.domene.Filtervalg;
 import no.nav.pto.veilarbportefolje.domene.Kjonn;
 import no.nav.pto.veilarbportefolje.domene.value.VeilederId;
 import no.nav.pto.veilarbportefolje.oppfolging.OppfolgingRepositoryV2;
-import no.nav.pto.veilarbportefolje.oppfolgingsbruker.OppfolgingsbrukerEntity;
+import no.nav.pto.veilarbportefolje.oppfolgingsbruker.OppfolgingsbrukerKafkaDTO;
 import no.nav.pto.veilarbportefolje.oppfolgingsbruker.OppfolginsbrukerRepositoryV2;
 import no.nav.pto.veilarbportefolje.registrering.DinSituasjonSvar;
 import no.nav.pto.veilarbportefolje.util.VedtakstottePilotRequest;
@@ -124,8 +124,9 @@ public class PostgresServiceTest {
 
     @Test
     public void skal_filtrere_pa_kjonn() {
-        lastOppBruker(Fnr.of("12031240241"), AktorId.of("123")); // Kvinne
-        lastOppBruker(Fnr.of("12031240141"), AktorId.of("321")); // Mann
+        when(veilarbVeilederClient.hentVeilederePaaEnhet(any())).thenReturn(List.of("Z12345", "Z12346"));
+        lastOppBruker(Fnr.of("12031240241"), AktorId.of("123"), VeilederId.of("Z12345")); // Kvinne
+        lastOppBruker(Fnr.of("12031240141"), AktorId.of("321"), VeilederId.of("Z12346")); // Mann
 
         Filtervalg filtervalg_kvinne = new Filtervalg().setFerdigfilterListe(List.of()).setKjonn(Kjonn.K);
         Filtervalg filtervalg_mann = new Filtervalg().setFerdigfilterListe(List.of()).setKjonn(Kjonn.M);
@@ -142,24 +143,26 @@ public class PostgresServiceTest {
 
     @Test
     public void skal_filtrere_pa_alder() {
-        lastOppBruker(Fnr.of("01091964488"), AktorId.of("123")); // under_21
-        lastOppBruker(Fnr.of("09118714501"), AktorId.of("321")); // Mann: 33
+        when(veilarbVeilederClient.hentVeilederePaaEnhet(any())).thenReturn(List.of("Z12345", "Z12346"));
+        lastOppBruker(Fnr.of("01091964488"), AktorId.of("123"), VeilederId.of("Z12345")); // under_21
+        lastOppBruker(Fnr.of("09118714501"), AktorId.of("321"), VeilederId.of("Z12346")); // Mann: 33
 
         Filtervalg alder_type_1 = new Filtervalg().setFerdigfilterListe(List.of()).setAlder(List.of("0-19"));
         Filtervalg alder_type_2 = new Filtervalg().setFerdigfilterListe(List.of()).setAlder(List.of("20-24", "30-39"));
 
-        BrukereMedAntall alder_respons_type_1 = postgresService.hentBrukere(enhetId, null, null, null, alder_type_1, 0, 10);
-        BrukereMedAntall alder_respons_type_2 = postgresService.hentBrukere(enhetId, null, null, null, alder_type_2, 0, 10);
+        BrukereMedAntall alder_respons_type_1 = postgresService.hentBrukere(enhetId, null, null, "ikke_satt", alder_type_1, 0, 10);
+        BrukereMedAntall alder_respons_type_2 = postgresService.hentBrukere(enhetId, null, null, "ikke_satt", alder_type_2, 0, 10);
 
         assertThat(alder_respons_type_1.getAntall()).isEqualTo(1);
         assertThat(alder_respons_type_2.getAntall()).isEqualTo(1);
-        assertThat(alder_respons_type_2.getBrukere().get(0).getFnr()).isEqualTo("09118714501");
+        assertThat(alder_respons_type_2.getBrukere().stream().anyMatch(b -> b.getFnr().equals("09118714501")));
     }
 
     @Test
     public void skal_filtrere_pa_fodselsdag() {
-        lastOppBruker(Fnr.of("01091964488"), AktorId.of("123")); // 1 i maneden
-        lastOppBruker(Fnr.of("07091964488"), AktorId.of("321")); // 7 i maneden
+        when(veilarbVeilederClient.hentVeilederePaaEnhet(any())).thenReturn(List.of("Z12345", "Z12346"));
+        lastOppBruker(Fnr.of("01091964488"), AktorId.of("123"), VeilederId.of("Z12345")); // 1 i maneden
+        lastOppBruker(Fnr.of("07091964488"), AktorId.of("321"), VeilederId.of("Z12346")); // 7 i maneden
 
         Filtervalg alder_type_1 = new Filtervalg().setFerdigfilterListe(List.of()).setFodselsdagIMnd(List.of("1"));
         Filtervalg alder_type_2 = new Filtervalg().setFerdigfilterListe(List.of()).setFodselsdagIMnd(List.of("1", "7"));
@@ -194,8 +197,9 @@ public class PostgresServiceTest {
         assertThat(brukereMedAntall.getBrukere().get(0).getVenterPaSvarFraBruker()).isEqualTo(venter_tidspunkt.toLocalDateTime());
     }
 
-    private void lastOppBruker(Fnr fnr, AktorId aktorId) {
+    private void lastOppBruker(Fnr fnr, AktorId aktorId, VeilederId veilederId) {
         oppfolgingRepositoryV2.settUnderOppfolging(aktorId, ZonedDateTime.now());
+        oppfolgingRepositoryV2.settVeileder(aktorId, veilederId);
         oppfolginsbrukerRepositoryV2.leggTilEllerEndreOppfolgingsbruker(
                 new OppfolgingsbrukerEntity(aktorId.get(), fnr.get(), null, null, "Testerson", "Testerson",
                         enhetId, null, null, null, null,
