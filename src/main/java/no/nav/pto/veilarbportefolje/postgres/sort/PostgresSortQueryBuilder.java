@@ -3,7 +3,6 @@ package no.nav.pto.veilarbportefolje.postgres.sort;
 import no.nav.pto.veilarbportefolje.domene.Filtervalg;
 
 import java.util.Objects;
-import no.nav.pto.veilarbportefolje.util.ValideringsRegler;
 
 import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_VIEW.*;
 
