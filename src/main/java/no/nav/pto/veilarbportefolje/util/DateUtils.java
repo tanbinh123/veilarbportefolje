@@ -152,14 +152,14 @@ public class DateUtils {
         if (date == null) {
             return null;
         }
-        return date.toLocalDateTime();
+        return date.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS);
     }
 
     public static LocalDateTime toLocalDateTimeOrNull(java.sql.Date date) {
         if (date == null) {
             return null;
         }
-        return date.toLocalDate().atStartOfDay();
+        return date.toLocalDate().atStartOfDay().truncatedTo(ChronoUnit.SECONDS);
     }
 
     public static java.sql.Date toSqlDateOrNull(String date) {
