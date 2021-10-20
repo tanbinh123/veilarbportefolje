@@ -6,8 +6,8 @@ import no.nav.common.types.identer.Fnr;
 import no.nav.pto.veilarbportefolje.aktiviteter.*;
 import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.GruppeAktivitetRepository;
 import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.GruppeAktivitetRepositoryV2;
+import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.TiltakRepository;
 import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.TiltakRepositoryV2;
-import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.TiltakRepositoryV3;
 import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.TiltakInnhold;
 import no.nav.pto.veilarbportefolje.config.ApplicationConfigTest;
 import no.nav.pto.veilarbportefolje.database.BrukerDataRepository;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.mock;
 public class TiltakPostgresTest {
     private final JdbcTemplate db;
     private final OppfolginsbrukerRepositoryV2 oppfolginsbrukerRepositoryV2;
-    private final TiltakRepositoryV3 tiltakRepositoryV3;
+    private final TiltakRepositoryV2 tiltakRepositoryV2;
     private final AktivitetStatusRepositoryV2 aktivitetStatusRepositoryV2;
     private final BrukerDataService brukerDataService;
 
@@ -50,13 +50,13 @@ public class TiltakPostgresTest {
         db = SingletonPostgresContainer.init().createJdbcTemplate();
         oppfolginsbrukerRepositoryV2 = new OppfolginsbrukerRepositoryV2(db);
         aktivitetStatusRepositoryV2 = new AktivitetStatusRepositoryV2(db);
-        tiltakRepositoryV3 = new TiltakRepositoryV3(db, aktivitetStatusRepositoryV2);
+        tiltakRepositoryV2 = new TiltakRepositoryV2(db, aktivitetStatusRepositoryV2);
 
         GruppeAktivitetRepositoryV2 gruppeAktivitetRepositoryV2 = mock(GruppeAktivitetRepositoryV2.class);
         AktiviteterRepositoryV2 aktiviteterRepositoryV2 = mock(AktiviteterRepositoryV2.class);
         Mockito.when(gruppeAktivitetRepositoryV2.hentAktiveAktivteter(any())).thenReturn(new ArrayList<>());
         Mockito.when(aktiviteterRepositoryV2.getAvtalteAktiviteterForAktoerid(any())).thenReturn(new AktoerAktiviteter("1").setAktiviteter(new ArrayList<>()));
-        brukerDataService = new BrukerDataService(mock(AktivitetDAO.class), mock(TiltakRepositoryV2.class), tiltakRepositoryV3, mock(GruppeAktivitetRepository.class), gruppeAktivitetRepositoryV2, mock(BrukerDataRepository.class), aktiviteterRepositoryV2, aktivitetStatusRepositoryV2);
+        brukerDataService = new BrukerDataService(mock(AktivitetDAO.class), mock(TiltakRepository.class), tiltakRepositoryV2, mock(GruppeAktivitetRepository.class), gruppeAktivitetRepositoryV2, mock(BrukerDataRepository.class), aktiviteterRepositoryV2, aktivitetStatusRepositoryV2);
     }
 
     @BeforeEach
@@ -81,16 +81,16 @@ public class TiltakPostgresTest {
                 .setEndretDato(new ArenaDato("2021-01-01"))
                 .setAktivitetperiodeTil(new ArenaDato("1990-01-01"))
                 .setAktivitetid("TA-123456789");
-        tiltakRepositoryV3.upsert(innhold, aktorId);
+        tiltakRepositoryV2.upsert(innhold, aktorId);
 
-        tiltakRepositoryV3.utledOgLagreTiltakInformasjon(aktorId);
+        tiltakRepositoryV2.utledOgLagreTiltakInformasjon(aktorId);
         brukerDataService.oppdaterAktivitetBrukerDataPostgres(aktorId);
 
-        List<String> tiltak = tiltakRepositoryV3.hentBrukertiltak(aktorId);
+        List<String> tiltak = tiltakRepositoryV2.hentBrukertiltak(aktorId);
         Optional<AktivitetStatus> aktivitetStatus = aktivitetStatusRepositoryV2.hentAktivitetTypeStatus(aktorId.get(), AktivitetTyper.tiltak.name());
         Optional<Timestamp> utloptAktivitet = aktivitetStatusRepositoryV2.hentAktivitetStatusUtlopt(aktorId.get());
 
-        Optional<String> kodeVerkNavn = tiltakRepositoryV3.hentVerdiITiltakskodeVerk(tiltaksType);
+        Optional<String> kodeVerkNavn = tiltakRepositoryV2.hentVerdiITiltakskodeVerk(tiltaksType);
 
         assertThat(tiltak.size()).isEqualTo(1);
         assertThat(tiltak.get(0)).isEqualTo(tiltaksType);
@@ -116,17 +116,17 @@ public class TiltakPostgresTest {
                 .setTiltakstype(tiltaksType)
                 .setDeltakerStatus("GJENN")
                 .setAktivitetid(id);
-        tiltakRepositoryV3.upsert(innhold, aktorId);
-        tiltakRepositoryV3.delete(id);
+        tiltakRepositoryV2.upsert(innhold, aktorId);
+        tiltakRepositoryV2.delete(id);
 
-        tiltakRepositoryV3.utledOgLagreTiltakInformasjon(aktorId);
+        tiltakRepositoryV2.utledOgLagreTiltakInformasjon(aktorId);
         brukerDataService.oppdaterAktivitetBrukerDataPostgres(aktorId);
 
-        List<String> tiltak = tiltakRepositoryV3.hentBrukertiltak(aktorId);
+        List<String> tiltak = tiltakRepositoryV2.hentBrukertiltak(aktorId);
         Optional<AktivitetStatus> aktivitetStatus = aktivitetStatusRepositoryV2.hentAktivitetTypeStatus(aktorId.get(), AktivitetTyper.tiltak.name());
         Optional<Timestamp> utloptAktivitet = aktivitetStatusRepositoryV2.hentAktivitetStatusUtlopt(aktorId.get());
 
-        Optional<String> kodeVerkNavn = tiltakRepositoryV3.hentVerdiITiltakskodeVerk(tiltaksType);
+        Optional<String> kodeVerkNavn = tiltakRepositoryV2.hentVerdiITiltakskodeVerk(tiltaksType);
 
         assertThat(tiltak.size()).isEqualTo(0);
         assertThat(kodeVerkNavn.isPresent()).isTrue();
@@ -160,11 +160,11 @@ public class TiltakPostgresTest {
                 .setDeltakerStatus("GJENN")
                 .setAktivitetid("T-321");
 
-        tiltakRepositoryV3.upsert(tiltak1, aktorId);
-        tiltakRepositoryV3.upsert(tiltak2, aktorId);
+        tiltakRepositoryV2.upsert(tiltak1, aktorId);
+        tiltakRepositoryV2.upsert(tiltak2, aktorId);
         Optional<OppfolgingsbrukerKafkaDTO> bruker = oppfolginsbrukerRepositoryV2.getOppfolgingsBruker(aktorId);
         System.out.println(bruker);
-        EnhetTiltak enhetTiltak = tiltakRepositoryV3.hentTiltakPaEnhet(EnhetId.of(navKontor));
+        EnhetTiltak enhetTiltak = tiltakRepositoryV2.hentTiltakPaEnhet(EnhetId.of(navKontor));
         assertThat(enhetTiltak.getTiltak().size()).isEqualTo(2);
         assertThat(enhetTiltak.getTiltak().get(tiltaksType1)).isEqualTo(tiltaksNavn1);
         assertThat(enhetTiltak.getTiltak().get(tiltaksType2)).isEqualTo(tiltaksNavn2);

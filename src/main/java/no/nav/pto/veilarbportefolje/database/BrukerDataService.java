@@ -6,8 +6,8 @@ import no.nav.common.types.identer.AktorId;
 import no.nav.pto.veilarbportefolje.aktiviteter.*;
 import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.GruppeAktivitetRepository;
 import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.GruppeAktivitetRepositoryV2;
+import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.TiltakRepository;
 import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.TiltakRepositoryV2;
-import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.TiltakRepositoryV3;
 import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.GruppeAktivitetSchedueldDTO;
 import no.nav.pto.veilarbportefolje.arenapakafka.ytelser.YtelseDAO;
 import no.nav.pto.veilarbportefolje.domene.Brukerdata;
@@ -28,8 +28,8 @@ import static java.util.stream.Collectors.toList;
 @RequiredArgsConstructor
 public class BrukerDataService {
     private final AktivitetDAO aktivitetDAO;
+    private final TiltakRepository tiltakRepository;
     private final TiltakRepositoryV2 tiltakRepositoryV2;
-    private final TiltakRepositoryV3 tiltakRepositoryV3;
     private final GruppeAktivitetRepository gruppeAktivitetRepository;
     private final GruppeAktivitetRepositoryV2 gruppeAktivitetRepositoryV2;
     private final BrukerDataRepository brukerDataRepository;
@@ -153,7 +153,7 @@ public class BrukerDataService {
 
     // TODO: vurder aa merge de to metodene under
     private List<Timestamp> hentAlleStartdatoer(AktorId aktorId, PersonId personId) {
-        List<Timestamp> startDatoer = tiltakRepositoryV2.hentStartDatoer(personId).stream()
+        List<Timestamp> startDatoer = tiltakRepository.hentStartDatoer(personId).stream()
                 .filter(Objects::nonNull).collect(toList());
         List<Timestamp> aktiviteter = aktivitetDAO.getAvtalteAktiviteterForAktoerid(aktorId).getAktiviteter().stream()
                 .filter(AktivitetUtils::harIkkeStatusFullfort)
@@ -171,7 +171,7 @@ public class BrukerDataService {
 
 
     private List<Timestamp> hentAlleSluttdatoer(AktorId aktorId, PersonId personId) {
-        List<Timestamp> sluttdatoer = tiltakRepositoryV2.hentSluttdatoer(personId).stream()
+        List<Timestamp> sluttdatoer = tiltakRepository.hentSluttdatoer(personId).stream()
                 .filter(Objects::nonNull).collect(toList());
         List<Timestamp> aktiviteter = aktivitetDAO.getAvtalteAktiviteterForAktoerid(aktorId).getAktiviteter().stream()
                 .filter(AktivitetUtils::harIkkeStatusFullfort)
@@ -197,7 +197,7 @@ public class BrukerDataService {
         List<Timestamp> gruppeAktiviteter = gruppeAktivitetRepositoryV2.hentAktiveAktivteter(aktorId).stream()
                 .map(GruppeAktivitetSchedueldDTO::getAktivitetperiodeFra)
                 .filter(Objects::nonNull).collect(toList());
-        List<Timestamp> tiltak = tiltakRepositoryV3.hentStartDatoer(aktorId).stream()
+        List<Timestamp> tiltak = tiltakRepositoryV2.hentStartDatoer(aktorId).stream()
                 .filter(Objects::nonNull).collect(toList());
         startDatoer.addAll(tiltak);
         startDatoer.addAll(gruppeAktiviteter);
@@ -215,7 +215,7 @@ public class BrukerDataService {
         List<Timestamp> gruppeAktiviteter = gruppeAktivitetRepositoryV2.hentAktiveAktivteter(aktorId).stream()
                 .map(GruppeAktivitetSchedueldDTO::getAktivitetperiodeTil)
                 .filter(Objects::nonNull).collect(toList());
-        List<Timestamp> tiltak = tiltakRepositoryV3.hentSluttdatoer(aktorId).stream()
+        List<Timestamp> tiltak = tiltakRepositoryV2.hentSluttdatoer(aktorId).stream()
                 .filter(Objects::nonNull).collect(toList());
         sluttdatoer.addAll(tiltak);
         sluttdatoer.addAll(gruppeAktiviteter);
