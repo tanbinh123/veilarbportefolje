@@ -3,28 +3,31 @@ package no.nav.pto.veilarbportefolje.postgres;
 import lombok.SneakyThrows;
 import net.logstash.logback.encoder.org.apache.commons.lang3.StringUtils;
 import no.nav.pto.veilarbportefolje.database.PostgresTable;
-import no.nav.pto.veilarbportefolje.domene.Bruker;
-import no.nav.pto.veilarbportefolje.domene.BrukereMedAntall;
-import no.nav.pto.veilarbportefolje.domene.Filtervalg;
-import no.nav.pto.veilarbportefolje.domene.Kjonn;
+import no.nav.pto.veilarbportefolje.database.Table;
+import no.nav.pto.veilarbportefolje.domene.*;
 import no.nav.pto.veilarbportefolje.postgres.sort.PostgresSortQueryBuilder;
 import no.nav.pto.veilarbportefolje.postgres.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.LocalDate;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
 import static java.util.stream.Collectors.toList;
 import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_VIEW.*;
+import static no.nav.pto.veilarbportefolje.domene.AktivitetFiltervalg.JA;
+import static no.nav.pto.veilarbportefolje.domene.AktivitetFiltervalg.NEI;
+import static no.nav.pto.veilarbportefolje.postgres.Utils.contains;
+import static no.nav.pto.veilarbportefolje.postgres.Utils.eq;
 
 public class PostgresQueryBuilder {
-    private final StringJoiner whereStatement = new StringJoiner(" AND ", " WHERE ", "");
+    private final String tableAlias = "tbl_bruker";
+    private final StringJoiner columns = new StringJoiner(", ");
+    private String mainTable = "";
+    private final StringJoiner joinedTables = new StringJoiner(",", ", ", "");
+    private final StringJoiner whereStatement = new StringJoiner(" AND ");
     private final PostgresSortQueryBuilder postgresSortQueryBuilder;
     private final JdbcTemplate db;
     private boolean vedtaksPilot;
@@ -33,19 +36,22 @@ public class PostgresQueryBuilder {
     public PostgresQueryBuilder(@Qualifier("PostgresJdbc") JdbcTemplate jdbcTemplate, String navKontor, boolean vedtaksPilot) {
         this.db = jdbcTemplate;
         this.vedtaksPilot = vedtaksPilot;
-        postgresSortQueryBuilder = new PostgresSortQueryBuilder();
+        columns.add(tableAlias + ".*");
         whereStatement.add(eq(NAV_KONTOR, navKontor));
         whereStatement.add(eq(OPPFOLGING, true));
-
+        postgresSortQueryBuilder = new PostgresSortQueryBuilder();
     }
 
     public BrukereMedAntall search(Integer fra, Integer antall) {
         List<Map<String, Object>> resultat;
+
         if (brukKunEssensiellInfo) {
-            resultat = db.queryForList("SELECT * FROM " + PostgresTable.OPTIMALISER_BRUKER_VIEW.TABLE_NAME + whereStatement + postgresSortQueryBuilder.getSortStatement());
+            mainTable = PostgresTable.OPTIMALISER_BRUKER_VIEW.TABLE_NAME + " " + tableAlias;
         } else {
-            resultat = db.queryForList("SELECT * FROM " + TABLE_NAME + whereStatement + postgresSortQueryBuilder.getSortStatement());
+            mainTable = PostgresTable.BRUKER_VIEW.TABLE_NAME + " " + tableAlias;
         }
+
+        resultat = db.queryForList(getAssembledSearchQuery());
 
         List<Bruker> avskjertResultat;
         if (resultat.size() <= fra) {
@@ -90,6 +96,10 @@ public class PostgresQueryBuilder {
 
     public void enhetOversiktFilter(List<String> veiledereMedTilgangTilEnhet) {
         whereStatement.add(contains(VEILEDERID, veiledereMedTilgangTilEnhet));
+    }
+
+    public void veiledereFilter(List<String> veiledere) {
+        whereStatement.add(contains(VEILEDERID, veiledere));
     }
 
     public void ufordeltBruker(List<String> veiledereMedTilgangTilEnhet) {
@@ -194,6 +204,63 @@ public class PostgresQueryBuilder {
         whereStatement.add("NOT (" + HAR_DELT_CV + " AND " + CV_EKSISTERER + ")");
     }
 
+    public void iavtaltAktivitet() {
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " GROUP BY AKTOERID) as iavt_akt");
+        columns.add("iavt_akt.NESTE_UTLOPSDATO");
+    }
+
+    public void tiltaksTyperFilter(List<String> tiltakstyper) {
+        String tiltakTyperSql = tiltakstyper.stream().map(x -> "'" + x + "'").collect(Collectors.joining(","));
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.BRUKERTILTAK.AKTOERID + " FROM " + PostgresTable.BRUKERTILTAK.TABLE_NAME + " brt WHERE brt.AKTOERID = " + getKeyColumn() + " AND " + PostgresTable.BRUKERTILTAK.TILTAKSKODE + " IN (" + tiltakTyperSql + ") GROUP BY AKTOERID) as bruk_tilt");
+    }
+
+    public void aktiviteterForenkletFilter(List<String> aktiviteterForenklet) {
+        String aktiviteterSql = aktiviteterForenklet.stream().map(x -> "'" + x + "'").collect(Collectors.joining(","));
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " AND " + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + " IN (" + aktiviteterSql + ") GROUP BY AKTOERID) as aktivt");
+        columns.add("aktivt.NESTE_UTLOPSDATO");
+    }
+
+    public void aktivitetFilter(Map<String, AktivitetFiltervalg> aktiviteter) {
+        List<String> includeAktiviteter = new ArrayList<>();
+        List<String> excludeAktiviteter = new ArrayList<>();
+        String aktiviteterSql = "";
+        aktiviteter.forEach((key, value) -> {
+            if (value.equals(JA)) {
+                includeAktiviteter.add(key);
+            } else if (value.equals(NEI)) {
+                excludeAktiviteter.add(key);
+            }
+        });
+        if (includeAktiviteter.isEmpty() && excludeAktiviteter.isEmpty()) {
+            return;
+        }
+        if (!includeAktiviteter.isEmpty()) {
+            aktiviteterSql += " AND " + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + " IN (" + includeAktiviteter.stream().map(x -> "'" + x + "'").collect(Collectors.joining(",")) + ")";
+        }
+        if (!excludeAktiviteter.isEmpty()) {
+            aktiviteterSql += " AND " + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + " NOT IN (" + excludeAktiviteter.stream().map(x -> "'" + x + "'").collect(Collectors.joining(",")) + ")";
+        }
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " " + aktiviteterSql + " GROUP BY AKTOERID) as aktivt");
+        columns.add("aktivt.NESTE_UTLOPSDATO");
+    }
+
+    /*
+     * TODO: find out from which table we should read data
+     * */
+    public void ytelserFilter(List<YtelseMapping> underytelser) {
+        String ytelserSql = underytelser.stream().map(x -> "'" + x.name() + "'").collect(Collectors.joining(","));
+    }
+
+    public void ulesteEndringerFilter() {
+        joinedTables.add("LATERAL (SELECT " + Table.SISTE_ENDRING.AKTOERID + " FROM " + Table.SISTE_ENDRING.TABLE_NAME + " sist WHERE sist.AKTOERID = " + getKeyColumn() + " AND " + Table.SISTE_ENDRING.ER_SETT + " GROUP BY AKTOERID) as sist_endr");
+    }
+
+    public void sisteEndringFilter(List<String> sisteEndringKategori) {
+        String sisteEndringSql = sisteEndringKategori.stream().map(x -> "'" + x + "'").collect(Collectors.joining(","));
+        joinedTables.add("LATERAL (SELECT " + Table.SISTE_ENDRING.AKTOERID + ", MIN(siste_endring_tidspunkt) AS siste_endring_tidspunkt FROM " + Table.SISTE_ENDRING.TABLE_NAME + " sist WHERE sist.AKTOERID = " + getKeyColumn() + " AND " + Table.SISTE_ENDRING.SISTE_ENDRING_KATEGORI + " IN (" + sisteEndringSql + ") GROUP BY AKTOERID) as sist_endr");
+        columns.add("sist_endr.siste_endring_tidspunkt");
+    }
+
     @SneakyThrows
     private Bruker mapTilBruker(Map<String, Object> row) {
         Bruker bruker = new Bruker();
@@ -204,25 +271,26 @@ public class PostgresQueryBuilder {
         }
     }
 
-    private String eq(String kolonne, boolean verdi) {
-        if (verdi) {
-            return kolonne;
-        } else {
-            return "NOT "+ kolonne;
-        }
+    private String getAssembledSearchQuery() {
+        StringJoiner computedSqlQuery = new StringJoiner(" ");
+
+        computedSqlQuery.add("SELECT");
+        computedSqlQuery.add(columns.toString());
+        computedSqlQuery.add("FROM");
+        computedSqlQuery.add(mainTable);
+        computedSqlQuery.add(joinedTables.toString());
+        computedSqlQuery.add("WHERE");
+        computedSqlQuery.add(whereStatement.toString());
+        computedSqlQuery.add("ORDER BY");
+        computedSqlQuery.add(getSortStatement());
+        return computedSqlQuery.toString();
     }
 
-    private String eq(String kolonne, String verdi) {
-        return kolonne + " = '" + verdi + "'";
+    private String getKeyColumn() {
+        return tableAlias + "." + AKTOERID;
     }
 
-    private String eq(String kolonne, int verdi) {
-        return kolonne + " = " + verdi;
+    private String getSortStatement() {
+        return postgresSortQueryBuilder.getSortStatement();
     }
-
-    private String contains(String kolonne, List<String> verdier) {
-        return kolonne + " IN " + verdier.stream().map(v -> "'" + v + "'").collect(Collectors.joining(",", "(", ")"));
-    }
-
-
 }

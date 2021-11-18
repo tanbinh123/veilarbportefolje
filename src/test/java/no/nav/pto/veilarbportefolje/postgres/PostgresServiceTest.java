@@ -17,7 +17,7 @@ import no.nav.pto.veilarbportefolje.domene.Filtervalg;
 import no.nav.pto.veilarbportefolje.domene.Kjonn;
 import no.nav.pto.veilarbportefolje.domene.value.VeilederId;
 import no.nav.pto.veilarbportefolje.oppfolging.OppfolgingRepositoryV2;
-import no.nav.pto.veilarbportefolje.oppfolgingsbruker.OppfolgingsbrukerKafkaDTO;
+import no.nav.pto.veilarbportefolje.oppfolgingsbruker.OppfolgingsbrukerEntity;
 import no.nav.pto.veilarbportefolje.oppfolgingsbruker.OppfolginsbrukerRepositoryV2;
 import no.nav.pto.veilarbportefolje.registrering.DinSituasjonSvar;
 import no.nav.pto.veilarbportefolje.util.VedtakstottePilotRequest;
@@ -33,7 +33,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import static no.nav.pto.veilarbportefolje.domene.Brukerstatus.*;
-import static no.nav.pto.veilarbportefolje.util.DateUtils.now;
+import static no.nav.pto.veilarbportefolje.util.DateUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -99,11 +99,7 @@ public class PostgresServiceTest {
     public void sok_pa_arbeidslista() {
         AktorId aktorId = AktorId.of("123456789");
         Fnr fnr = Fnr.ofValidFnr("01010101010");
-        oppfolgingRepositoryV2.settUnderOppfolging(aktorId, ZonedDateTime.now());
-        oppfolginsbrukerRepositoryV2.leggTilEllerEndreOppfolgingsbruker(
-                new OppfolgingsbrukerEntity(aktorId.get(), fnr.get(), null, null, "Testerson", "Testerson",
-                        enhetId, null, null, null, null,
-                        null, true, true, false, null, ZonedDateTime.now()));
+        lastOppBruker(fnr, aktorId, VeilederId.of("Z12345"));
 
         Filtervalg filtervalg = new Filtervalg().setFerdigfilterListe(List.of(MIN_ARBEIDSLISTE));
         BrukereMedAntall brukereMedAntall_pre = postgresService.hentBrukere(enhetId, null, null, null, filtervalg, 0, 10);
@@ -178,11 +174,8 @@ public class PostgresServiceTest {
     @Test
     public void sok_pa_dialog() {
         AktorId aktorId = AktorId.of("123456789");
-        oppfolgingRepositoryV2.settUnderOppfolging(aktorId, now());
-        oppfolginsbrukerRepositoryV2.leggTilEllerEndreOppfolgingsbruker(
-                new OppfolgingsbrukerEntity(aktorId.get(), null, null, null, "Testerson", "Testerson",
-                        enhetId, null, null, null, null,
-                        null, true, true, false, null, ZonedDateTime.now()));
+        lastOppBruker(Fnr.of("01010101010"), aktorId, VeilederId.of("Z12345"));
+
         ZonedDateTime venter_tidspunkt = now();
         dialogRepositoryV2.oppdaterDialogInfoForBruker(
                 new Dialogdata()
@@ -194,7 +187,43 @@ public class PostgresServiceTest {
 
         BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, null, null, filtervalg, 0, 10);
         assertThat(brukereMedAntall.getAntall()).isEqualTo(1);
-        assertThat(brukereMedAntall.getBrukere().get(0).getVenterPaSvarFraBruker()).isEqualTo(venter_tidspunkt.toLocalDateTime());
+        assertThat(brukereMedAntall.getBrukere().get(0).getVenterPaSvarFraBruker()).isEqualTo(toLocalDateTimeOrNull(toTimestamp(venter_tidspunkt)));
+    }
+
+    @Test
+    public void sok_pa_iavtaltAktivitet() {
+        AktorId aktorId = AktorId.of("123456789");
+        lastOppBruker(Fnr.of("01010101010"), aktorId, VeilederId.of("Z12345"));
+
+        Filtervalg filtervalg = new Filtervalg().setFerdigfilterListe(List.of(I_AVTALT_AKTIVITET));
+        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", "iavtaltaktivitet", filtervalg, 0, 10);
+    }
+
+    @Test
+    public void sok_pa_tiltaksTyper() {
+        AktorId aktorId = AktorId.of("123456789");
+        lastOppBruker(Fnr.of("01010101010"), aktorId, VeilederId.of("Z12345"));
+
+        Filtervalg filtervalg = new Filtervalg().setTiltakstyper(List.of("INDOPPFAG", "NETTAMO"));
+        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", null, filtervalg, 0, 10);
+    }
+
+    @Test
+    public void sok_pa_tiltaksTyper_og_iavtaltAktivitet() {
+        AktorId aktorId = AktorId.of("123456789");
+        lastOppBruker(Fnr.of("01010101010"), aktorId, VeilederId.of("Z12345"));
+
+        Filtervalg filtervalg = new Filtervalg().setTiltakstyper(List.of("INDOPPFAG", "NETTAMO")).setFerdigfilterListe(List.of(I_AVTALT_AKTIVITET));
+        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", "iavtaltaktivitet", filtervalg, 0, 10);
+    }
+
+    @Test
+    public void sok_pa_aktiviteterForenklet() {
+        AktorId aktorId = AktorId.of("123456789");
+        lastOppBruker(Fnr.of("01010101010"), aktorId, VeilederId.of("Z12345"));
+
+        Filtervalg filtervalg = new Filtervalg().setAktiviteterForenklet(List.of("SOKEAVTALE", "STILLING"));
+        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", "iavtaltaktivitet", filtervalg, 0, 10);
     }
 
     private void lastOppBruker(Fnr fnr, AktorId aktorId, VeilederId veilederId) {

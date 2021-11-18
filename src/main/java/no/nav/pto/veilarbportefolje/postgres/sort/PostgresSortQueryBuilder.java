@@ -7,12 +7,13 @@ import java.util.Objects;
 import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_VIEW.*;
 
 public class PostgresSortQueryBuilder {
-    private final SortJoiner sortStatement = new SortJoiner(" ORDER BY ", ",", ";");
+    private final SortJoiner sortStatement = new SortJoiner(" ", ",", "");
 
     public void createSortStatements(String sortField, SortOrder order, Filtervalg filtervalg, boolean kallesFraMinOversikt) {
         if (Objects.isNull(sortField) || sortField.equals("ikke_satt")) {
             sortStatement.add(AKTOERID, SortOrder.ASC);
             return;
+        }
         if (kallesFraMinOversikt) {
             sortStatement.add(NY_FOR_VEILEDER, SortOrder.DESC);
         }
@@ -48,8 +49,10 @@ public class PostgresSortQueryBuilder {
             case "forrige_aktivitet_start":
                 break;
             case "iavtaltaktivitet":
+                sortStatement.add("iavt_akt.NESTE_UTLOPSDATO", order);
                 break;
             case "moterMedNAVIdag":
+                //sort by activity mote, order by time
                 break;
             case "neste_aktivitet_start":
                 break;
@@ -65,6 +68,7 @@ public class PostgresSortQueryBuilder {
             case "utlopteaktiviteter":
                 break;
             case "valgteaktiviteter":
+                sortStatement.add("aktivt.NESTE_UTLOPSDATO", order);
                 break;
             case "vedtak_status_endret":
                 //@todo: is it necessary to convert this field from timestamp to string

@@ -8,11 +8,7 @@ import no.nav.arbeid.soker.registrering.UtdanningSvar;
 import no.nav.pto.veilarbportefolje.registrering.DinSituasjonSvar;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BinaryOperator;
 
 @Data()
@@ -87,7 +83,7 @@ public class Filtervalg {
     }
 
     public boolean harAktivitetFilter() {
-        return tiltakstyper != null;
+        return aktiviteter != null;
     }
 
     public boolean harSisteEndringFilter() {
@@ -98,7 +94,7 @@ public class Filtervalg {
         return manuellBrukerStatus != null && !manuellBrukerStatus.isEmpty();
     }
 
-    public boolean harAktiviteterForenklet(){
+    public boolean harAktiviteterForenklet() {
         return !aktiviteterForenklet.isEmpty();
     }
 

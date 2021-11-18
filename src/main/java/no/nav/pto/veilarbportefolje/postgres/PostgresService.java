@@ -3,13 +3,7 @@ package no.nav.pto.veilarbportefolje.postgres;
 import no.nav.common.types.identer.EnhetId;
 import no.nav.pto.veilarbportefolje.client.VeilarbVeilederClient;
 import no.nav.pto.veilarbportefolje.database.PostgresTable;
-import no.nav.pto.veilarbportefolje.domene.Bruker;
-import no.nav.pto.veilarbportefolje.domene.BrukereMedAntall;
-import no.nav.pto.veilarbportefolje.domene.Brukerstatus;
-import no.nav.pto.veilarbportefolje.domene.CVjobbprofil;
-import no.nav.pto.veilarbportefolje.domene.FacetResults;
-import no.nav.pto.veilarbportefolje.domene.Filtervalg;
-import no.nav.pto.veilarbportefolje.domene.StatusTall;
+import no.nav.pto.veilarbportefolje.domene.*;
 import no.nav.pto.veilarbportefolje.util.VedtakstottePilotRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -76,11 +70,6 @@ public class PostgresService {
         query.leggTilListeFilter(filtervalg.utdanningBestatt, PostgresTable.BRUKER_VIEW.UTDANNING_BESTATT);
         query.leggTilListeFilter(filtervalg.utdanningGodkjent, PostgresTable.BRUKER_VIEW.UTDANNING_GODKJENT);
 
-        /*
-        byggManuellFilter(filtervalg.manuellBrukerStatus, queryBuilder, "manuell_bruker");
-        byggManuellFilter(filtervalg.tiltakstyper, queryBuilder, "tiltak");
-        byggManuellFilter(filtervalg.aktiviteterForenklet, queryBuilder, "aktiviteter");
-        */
         if (filtervalg.harNavnEllerFnrQuery()) {
             query.navnOgFodselsnummerSok(filtervalg.getNavnEllerFnrQuery());
         }
@@ -102,26 +91,34 @@ public class PostgresService {
             }
         }
 
-        /*
+        if (!filtervalg.veiledere.isEmpty()) {
+            query.veiledereFilter(filtervalg.veiledere);
+        }
+
+        if (!filtervalg.tiltakstyper.isEmpty()) {
+            query.tiltaksTyperFilter(filtervalg.tiltakstyper);
+        }
+
+        if (!filtervalg.aktiviteterForenklet.isEmpty()) {
+            query.aktiviteterForenkletFilter(filtervalg.aktiviteterForenklet);
+        }
+
         if (filtervalg.harYtelsefilter()) {
-            BoolQueryBuilder subQuery = boolQuery();
-            filtervalg.ytelse.underytelser.forEach(
-                    ytelse -> queryBuilder.must(subQuery.should(matchQuery("ytelse", ytelse.name())))
-            );
+            query.ytelserFilter(filtervalg.ytelse.underytelser);
         }
 
         if (filtervalg.harAktivitetFilter()) {
-            byggAktivitetFilterQuery(filtervalg, queryBuilder);
+            query.aktivitetFilter(filtervalg.aktiviteter);
         }
 
+
         if (filtervalg.harUlesteEndringerFilter()) {
-            byggUlestEndringsFilter(filtervalg.sisteEndringKategori, queryBuilder);
+            query.ulesteEndringerFilter();
         }
 
         if (filtervalg.harSisteEndringFilter()) {
-            byggSisteEndringFilter(filtervalg.sisteEndringKategori, queryBuilder);
+            query.sisteEndringFilter(filtervalg.sisteEndringKategori);
         }
-         */
     }
 
 
@@ -143,7 +140,7 @@ public class PostgresService {
                 query.venterPaSvarFraBruker();
                 break;
             case I_AVTALT_AKTIVITET:
-                // existsQuery("aktiviteter");
+                query.iavtaltAktivitet();
                 break;
             case IKKE_I_AVTALT_AKTIVITET:
                 // boolQuery().mustNot(existsQuery("aktiviteter"));
