@@ -20,12 +20,16 @@ public class PostgresSortQueryBuilder {
 
         switch (sortField) {
             case "aapmaxtiduke":
+                sortStatement.add("ytls.aapmaxtiduke", order);
                 break;
             case "aaprettighetsperiode":
+                sortStatement.add("ytls.aaprettighetsperiode", order);
                 break;
             case "aapunntakukerigjen":
+                sortStatement.add("ytls.aapunntakukerigjen", order);
                 break;
             case "aktivitet_start":
+
                 break;
             case "ansvarlig_veileder_for_vedtak":
                 sortStatement.add(VEDTAKSTATUS_ANSVARLIG_VEILDERNAVN, order);
@@ -39,6 +43,7 @@ public class PostgresSortQueryBuilder {
                 sortStatement.add(ARB_KATEGORI, order);
                 break;
             case "dagputlopuke":
+                sortStatement.add("ytls.dagputlopuke", order);
                 break;
             case "etternavn":
                 sortStatement.add(ETTERNAVN, order);
@@ -62,16 +67,17 @@ public class PostgresSortQueryBuilder {
             case "permutlopuke":
                 break;
             case "siste_endring_tidspunkt":
+                sortStatement.add("sist_endr.siste_endring_tidspunkt", order);
                 break;
             case "utlopsdato":
                 break;
             case "utlopteaktiviteter":
+                sortStatement.add("utlp_akt.NYESTEUTLOPTEAKTIVITET", order);
                 break;
             case "valgteaktiviteter":
                 sortStatement.add("aktivt.NESTE_UTLOPSDATO", order);
                 break;
             case "vedtak_status_endret":
-                //@todo: is it necessary to convert this field from timestamp to string
                 sortStatement.add(VEDTAKSTATUS_ENDRET_TIDSPUNKT, order);
                 break;
             case "vedtakstatus":
@@ -81,7 +87,6 @@ public class PostgresSortQueryBuilder {
                 sortStatement.add(VEILEDERID, order);
                 break;
             case "venterpasvarfrabruker":
-
                 break;
             case "venterpasvarfranav":
                 break;

@@ -205,8 +205,19 @@ public class PostgresQueryBuilder {
     }
 
     public void iavtaltAktivitet() {
-        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " GROUP BY AKTOERID) as iavt_akt");
-        columns.add("iavt_akt.NESTE_UTLOPSDATO");
+        String tableAlias = "iavt_akt";
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " GROUP BY AKTOERID) as " + tableAlias);
+        columns.add(tableAlias + ".NESTE_UTLOPSDATO");
+    }
+
+    public void ikkeIAvtaltAktivitet() {
+        whereStatement.add(getKeyColumn() + " NOT IN (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + " FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + ")");
+    }
+
+    public void utlopteAktivitet() {
+        String tableAlias = "utlp_akt";
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITET_STATUS.AKTOERID + ", MAX(" + PostgresTable.AKTIVITET_STATUS.NYESTEUTLOPTEAKTIVITET + ") as NYESTEUTLOPTEAKTIVITET FROM " + PostgresTable.AKTIVITET_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " AND " + PostgresTable.AKTIVITET_STATUS.NYESTEUTLOPTEAKTIVITET + " IS NOT NULL GROUP BY AKTOERID) as " + tableAlias);
+        columns.add(tableAlias + ".NYESTEUTLOPTEAKTIVITET");
     }
 
     public void tiltaksTyperFilter(List<String> tiltakstyper) {
@@ -215,12 +226,14 @@ public class PostgresQueryBuilder {
     }
 
     public void aktiviteterForenkletFilter(List<String> aktiviteterForenklet) {
+        String tableAlias = "aktivt";
         String aktiviteterSql = aktiviteterForenklet.stream().map(x -> "'" + x + "'").collect(Collectors.joining(","));
-        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " AND " + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + " IN (" + aktiviteterSql + ") GROUP BY AKTOERID) as aktivt");
-        columns.add("aktivt.NESTE_UTLOPSDATO");
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " AND " + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + " IN (" + aktiviteterSql + ") GROUP BY AKTOERID) as " + tableAlias);
+        columns.add(tableAlias + ".NESTE_UTLOPSDATO");
     }
 
     public void aktivitetFilter(Map<String, AktivitetFiltervalg> aktiviteter) {
+        String tableAlias = "aktivt";
         List<String> includeAktiviteter = new ArrayList<>();
         List<String> excludeAktiviteter = new ArrayList<>();
         String aktiviteterSql = "";
@@ -240,15 +253,19 @@ public class PostgresQueryBuilder {
         if (!excludeAktiviteter.isEmpty()) {
             aktiviteterSql += " AND " + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + " NOT IN (" + excludeAktiviteter.stream().map(x -> "'" + x + "'").collect(Collectors.joining(",")) + ")";
         }
-        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " " + aktiviteterSql + " GROUP BY AKTOERID) as aktivt");
-        columns.add("aktivt.NESTE_UTLOPSDATO");
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " " + aktiviteterSql + " GROUP BY AKTOERID) as " + tableAlias);
+        columns.add(tableAlias + ".NESTE_UTLOPSDATO");
     }
 
-    /*
-     * TODO: find out from which table we should read data
-     * */
     public void ytelserFilter(List<YtelseMapping> underytelser) {
+        String tableAlias = "ytls";
         String ytelserSql = underytelser.stream().map(x -> "'" + x.name() + "'").collect(Collectors.joining(","));
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.YTELSE_STATUS_FOR_BRUKER.AKTOERID + ",  MIN(" + PostgresTable.YTELSE_STATUS_FOR_BRUKER.DAGPUTLOPUKE + ")  AS aapmaxtiduke, MAX(aapmaxtiduke, aapunntakdagerigjen / 5) AS aaprettighetsperiode, MIN(" + PostgresTable.YTELSE_STATUS_FOR_BRUKER.AAPUNNTAKDAGERIGJEN + " / 5) as aapunntakukerigjen, MIN(" + PostgresTable.YTELSE_STATUS_FOR_BRUKER.DAGPUTLOPUKE + ") as dagputlopuke FROM " + PostgresTable.YTELSE_STATUS_FOR_BRUKER.TABLE_NAME + " ytls WHERE ytls.AKTOERID = " + getKeyColumn() + " AND " + PostgresTable.YTELSE_STATUS_FOR_BRUKER.YTELSE + " IN (" + ytelserSql + ") GROUP BY AKTOERID) as " + tableAlias);
+        columns.add(tableAlias + "." + PostgresTable.YTELSE_STATUS_FOR_BRUKER.DAGPUTLOPUKE);
+        columns.add(tableAlias + ".aapmaxtiduke");
+        columns.add(tableAlias + ".aaprettighetsperiode");
+        columns.add(tableAlias + ".aapunntakukerigjen");
+        columns.add(tableAlias + ".dagputlopuke");
     }
 
     public void ulesteEndringerFilter() {
@@ -256,9 +273,14 @@ public class PostgresQueryBuilder {
     }
 
     public void sisteEndringFilter(List<String> sisteEndringKategori) {
+        String tableAlias = "sist_endr";
         String sisteEndringSql = sisteEndringKategori.stream().map(x -> "'" + x + "'").collect(Collectors.joining(","));
         joinedTables.add("LATERAL (SELECT " + Table.SISTE_ENDRING.AKTOERID + ", MIN(siste_endring_tidspunkt) AS siste_endring_tidspunkt FROM " + Table.SISTE_ENDRING.TABLE_NAME + " sist WHERE sist.AKTOERID = " + getKeyColumn() + " AND " + Table.SISTE_ENDRING.SISTE_ENDRING_KATEGORI + " IN (" + sisteEndringSql + ") GROUP BY AKTOERID) as sist_endr");
-        columns.add("sist_endr.siste_endring_tidspunkt");
+        columns.add(tableAlias + ".siste_endring_tidspunkt");
+    }
+
+    public void moterIDag() {
+        
     }
 
     @SneakyThrows

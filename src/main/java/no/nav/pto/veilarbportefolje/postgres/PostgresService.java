@@ -143,18 +143,16 @@ public class PostgresService {
                 query.iavtaltAktivitet();
                 break;
             case IKKE_I_AVTALT_AKTIVITET:
-                // boolQuery().mustNot(existsQuery("aktiviteter"));
+                query.ikkeIAvtaltAktivitet();
                 break;
             case UTLOPTE_AKTIVITETER:
-                // existsQuery("nyesteutlopteaktivitet");
+                query.utlopteAktivitet();
                 break;
             case MIN_ARBEIDSLISTE:
                 query.harArbeidsliste();
                 break;
             case MOTER_IDAG:
-                /* = rangeQuery("aktivitet_mote_startdato")
-                        .gte(toIsoUTC(localDate.atStartOfDay()))
-                        .lt(toIsoUTC(localDate.plusDays(1).atStartOfDay()));*/
+                query.moterIDag();
                 break;
             case ER_SYKMELDT_MED_ARBEIDSGIVER:
                 query.erSykmeldtMedArbeidsgiver(erVedtakstottePilotPa);

@@ -156,6 +156,18 @@ public class PostgresTable {
         public static final String ANTALLUKERIGJENUNNTAK = "ANTALLUKERIGJENUNNTAK";
     }
 
+    public static final class YTELSE_STATUS_FOR_BRUKER {
+        public static final String TABLE_NAME = "YTELSE_STATUS_FOR_BRUKER";
+
+        public static final String AKTOERID = "AKTOERID";
+        public static final String UTLOPSDATO = "UTLOPSDATO";
+        public static final String DAGPUTLOPUKE = "DAGPUTLOPUKE";
+        public static final String PERMUTLOPUKE = "PERMUTLOPUKE";
+        public static final String AAPMAXTIDUKE = "AAPMAXTIDUKE";
+        public static final String AAPUNNTAKDAGERIGJEN = "AAPUNNTAKDAGERIGJEN";
+        public static final String YTELSE = "YTELSE";
+    }
+
     public static final class LEST_ARENA_HENDELSE_YTELSER {
         public static final String TABLE_NAME = "LEST_ARENA_HENDELSE_YTELSE";
         public static final String VEDTAKID = "VEDTAKID";
@@ -226,10 +238,10 @@ public class PostgresTable {
     public static final class AKTIVITET_STATUS {
         public static final String TABLE_NAME = "AKTIVITET_STATUS_FOR_BRUKER";
         public static final String AKTOERID = "AKTOERID";
-        public static final String NYESTEUTLOPTEAKTIVITET ="NYESTEUTLOPTEAKTIVITET";
-        public static final String FORRIGE_AKTIVITET_START ="FORRIGE_AKTIVITET_START";
-        public static final String AKTIVITET_START ="AKTIVITET_START";
-        public static final String NESTE_AKTIVITET_START ="NESTE_AKTIVITET_START";
+        public static final String NYESTEUTLOPTEAKTIVITET = "NYESTEUTLOPTEAKTIVITET";
+        public static final String FORRIGE_AKTIVITET_START = "FORRIGE_AKTIVITET_START";
+        public static final String AKTIVITET_START = "AKTIVITET_START";
+        public static final String NESTE_AKTIVITET_START = "NESTE_AKTIVITET_START";
     }
 
     public static final class BRUKERTILTAK {
