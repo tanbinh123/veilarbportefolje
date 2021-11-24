@@ -69,7 +69,7 @@ public class PostgresQueryBuilder {
 
     public void sorterQueryParametere(String sortOrder, String sortField, Filtervalg filtervalg, boolean kallesFraMinOversikt) {
         SortOrder order = "ascending".equals(sortOrder) ? SortOrder.ASC : SortOrder.DESC;
-        postgresSortQueryBuilder.createSortStatements(sortField, order, filtervalg, kallesFraMinOversikt);
+        postgresSortQueryBuilder.createSortStatements(sortField, order, kallesFraMinOversikt);
     }
 
     public <T> void leggTilListeFilter(List<T> filtervalgsListe, String columnName) {
@@ -206,12 +206,12 @@ public class PostgresQueryBuilder {
 
     public void iavtaltAktivitet() {
         String tableAlias = "iavt_akt";
-        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " GROUP BY AKTOERID) as " + tableAlias);
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " AND aktiv GROUP BY AKTOERID) as " + tableAlias);
         columns.add(tableAlias + ".NESTE_UTLOPSDATO");
     }
 
     public void ikkeIAvtaltAktivitet() {
-        whereStatement.add(getKeyColumn() + " NOT IN (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + " FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + ")");
+        whereStatement.add(getKeyColumn() + " NOT IN (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + " FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " WHERE aktiv)");
     }
 
     public void utlopteAktivitet() {
@@ -228,7 +228,7 @@ public class PostgresQueryBuilder {
     public void aktiviteterForenkletFilter(List<String> aktiviteterForenklet) {
         String tableAlias = "aktivt";
         String aktiviteterSql = aktiviteterForenklet.stream().map(x -> "'" + x + "'").collect(Collectors.joining(","));
-        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " AND " + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + " IN (" + aktiviteterSql + ") GROUP BY AKTOERID) as " + tableAlias);
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " AND " + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + " IN (" + aktiviteterSql + ") AND aktiv GROUP BY AKTOERID) as " + tableAlias);
         columns.add(tableAlias + ".NESTE_UTLOPSDATO");
     }
 
@@ -253,7 +253,7 @@ public class PostgresQueryBuilder {
         if (!excludeAktiviteter.isEmpty()) {
             aktiviteterSql += " AND " + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + " NOT IN (" + excludeAktiviteter.stream().map(x -> "'" + x + "'").collect(Collectors.joining(",")) + ")";
         }
-        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " " + aktiviteterSql + " GROUP BY AKTOERID) as " + tableAlias);
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " " + aktiviteterSql + " AND aktiv GROUP BY AKTOERID) as " + tableAlias);
         columns.add(tableAlias + ".NESTE_UTLOPSDATO");
     }
 
@@ -280,7 +280,10 @@ public class PostgresQueryBuilder {
     }
 
     public void moterIDag() {
-        
+        String tableAlias = "moter_idag";
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_STARTDATO + ") as neste_startdato, min(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + "::timestamp) - min(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_STARTDATO + "::timestamp) as duration FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " mott WHERE mott.AKTOERID  = " + getKeyColumn() + " AND aktiv AND aktivitettype = 'mote' AND neste_startdato::date = current_timestamp::date GROUP BY AKTOERID) as " + tableAlias);
+        columns.add(tableAlias + ".neste_startdato");
+        columns.add(tableAlias + ".duration");
     }
 
     @SneakyThrows

@@ -1,7 +1,5 @@
 package no.nav.pto.veilarbportefolje.postgres.sort;
 
-import no.nav.pto.veilarbportefolje.domene.Filtervalg;
-
 import java.util.Objects;
 
 import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_VIEW.*;
@@ -9,7 +7,7 @@ import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_VIEW.*;
 public class PostgresSortQueryBuilder {
     private final SortJoiner sortStatement = new SortJoiner(" ", ",", "");
 
-    public void createSortStatements(String sortField, SortOrder order, Filtervalg filtervalg, boolean kallesFraMinOversikt) {
+    public void createSortStatements(String sortField, SortOrder order, boolean kallesFraMinOversikt) {
         if (Objects.isNull(sortField) || sortField.equals("ikke_satt")) {
             sortStatement.add(AKTOERID, SortOrder.ASC);
             return;
@@ -57,7 +55,7 @@ public class PostgresSortQueryBuilder {
                 sortStatement.add("iavt_akt.NESTE_UTLOPSDATO", order);
                 break;
             case "moterMedNAVIdag":
-                //sort by activity mote, order by time
+                sortStatement.add("moter_idag.neste_startdato", order);
                 break;
             case "neste_aktivitet_start":
                 break;
