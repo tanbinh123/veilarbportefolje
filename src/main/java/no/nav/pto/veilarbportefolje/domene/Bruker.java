@@ -10,6 +10,8 @@ import no.nav.pto.veilarbportefolje.elastic.domene.Endring;
 import no.nav.pto.veilarbportefolje.elastic.domene.OppfolgingsBruker;
 import no.nav.pto.veilarbportefolje.postgres.PostgresUtils;
 import no.nav.pto.veilarbportefolje.util.OppfolgingUtils;
+import org.json.JSONArray;
+import org.postgresql.util.PGobject;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -215,6 +217,10 @@ public class Bruker {
         String diskresjonskode = (String) row.get(DISKRESJONSKODE);
         String formidlingsgruppekode = (String) row.get(FORMIDLINGSGRUPPEKODE);
 
+        if (row.get("aktiviteter_array") != null || row.get("neste_utlopsdato_array") != null) {
+            addAktiviteter(((PGobject) row.get("aktiviteter_array")).getValue(), ((PGobject) row.get("neste_utlopsdato_array")).getValue());
+        }
+
         return setNyForVeileder((boolean) row.get(NY_FOR_VEILEDER))
                 .setVeilederId((String) row.get(VEILEDERID))
                 .setDiskresjonskode((String) row.get(DISKRESJONSKODE))
@@ -237,6 +243,11 @@ public class Bruker {
         boolean trengerVurdering = OppfolgingUtils.trengerVurdering(formidlingsgruppekode, kvalifiseringsgruppekode);
         boolean trengerRevurdering = OppfolgingUtils.trengerRevurderingVedtakstotte(formidlingsgruppekode, kvalifiseringsgruppekode, vedtakstatus);
         boolean erSykmeldtMedArbeidsgiver = OppfolgingUtils.erSykmeldtMedArbeidsgiver(formidlingsgruppekode, kvalifiseringsgruppekode);
+
+        if (row.get("aktiviteter_array") != null || row.get("neste_utlopsdato_array") != null) {
+            addAktiviteter(((PGobject) row.get("aktiviteter_array")).getValue(), ((PGobject) row.get("neste_utlopsdato_array")).getValue());
+        }
+
         return setFnr((String) row.get(FODSELSNR))
                 .setNyForVeileder(PostgresUtils.safeBool((boolean) row.get(NY_FOR_VEILEDER)))
                 .setTrengerVurdering(trengerVurdering)
@@ -261,6 +272,15 @@ public class Bruker {
                 .setArbeidsliste(Arbeidsliste.of(row))
                 .setVurderingsBehov(trengerVurdering ? vurderingsBehov(formidlingsgruppekode, kvalifiseringsgruppekode, profileringResultat, erVedtakstottePilotPa) : null);
         //TODO: utledd manuell
+    }
+
+    private void addAktiviteter(String aktiviteter_array, String neste_utlopsdato_array) {
+        JSONArray aktiviteter = new JSONArray(aktiviteter_array);
+        JSONArray neste_utlopsdato = new JSONArray(neste_utlopsdato_array);
+
+        for (int i = 0; i < aktiviteter.length(); i++) {
+            addAktivitetUtlopsdato(aktiviteter.get(i).toString(), toTimestamp(LocalDateTime.parse(neste_utlopsdato.get(i).toString())));
+        }
     }
 
     // TODO: sjekk om disse feltene er i bruk, de kan være nødvendige for statuser eller filtere

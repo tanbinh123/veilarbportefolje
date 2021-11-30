@@ -26,7 +26,7 @@ public class PostgresQueryBuilder {
     private final String tableAlias = "tbl_bruker";
     private final StringJoiner columns = new StringJoiner(", ");
     private String mainTable = "";
-    private final StringJoiner joinedTables = new StringJoiner(",", ", ", "");
+    private final List<String> joinedTables = new ArrayList<>();
     private final StringJoiner whereStatement = new StringJoiner(" AND ");
     private final PostgresSortQueryBuilder postgresSortQueryBuilder;
     private final JdbcTemplate db;
@@ -206,8 +206,10 @@ public class PostgresQueryBuilder {
 
     public void iavtaltAktivitet() {
         String tableAlias = "iavt_akt";
-        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " AND aktiv GROUP BY AKTOERID) as " + tableAlias);
-        columns.add(tableAlias + ".NESTE_UTLOPSDATO");
+        joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as neste_utlopsdato, json_agg(" + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + ") AS aktiviteter_array, json_agg(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as neste_utlopsdato_array FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " AND aktiv GROUP BY AKTOERID) as " + tableAlias);
+        columns.add(tableAlias + ".neste_utlopsdato");
+        columns.add(tableAlias + ".aktiviteter_array");
+        columns.add(tableAlias + ".neste_utlopsdato_array");
     }
 
     public void ikkeIAvtaltAktivitet() {
@@ -303,7 +305,7 @@ public class PostgresQueryBuilder {
         computedSqlQuery.add(columns.toString());
         computedSqlQuery.add("FROM");
         computedSqlQuery.add(mainTable);
-        computedSqlQuery.add(joinedTables.toString());
+        computedSqlQuery.add(joinedTables.stream().map(x -> ", " + x).collect(Collectors.joining()));
         computedSqlQuery.add("WHERE");
         computedSqlQuery.add(whereStatement.toString());
         computedSqlQuery.add("ORDER BY");
