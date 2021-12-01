@@ -37,8 +37,6 @@ public class PostgresService {
         boolean kallesFraMinOversikt = StringUtils.isNotBlank(veilederIdent);
         if (kallesFraMinOversikt) {
             query.minOversiktFilter(veilederIdent);
-        } else {
-            query.enhetOversiktFilter(veiledereMedTilgangTilEnhet);
         }
 
         if (filtervalg.harAktiveFilter()) {

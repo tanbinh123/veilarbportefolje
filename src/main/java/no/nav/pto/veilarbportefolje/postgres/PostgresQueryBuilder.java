@@ -94,17 +94,13 @@ public class PostgresQueryBuilder {
         whereStatement.add(eq(VEILEDERID, veilederId));
     }
 
-    public void enhetOversiktFilter(List<String> veiledereMedTilgangTilEnhet) {
-        whereStatement.add(contains(VEILEDERID, veiledereMedTilgangTilEnhet));
-    }
-
     public void veiledereFilter(List<String> veiledere) {
         whereStatement.add(contains(VEILEDERID, veiledere));
     }
 
     public void ufordeltBruker(List<String> veiledereMedTilgangTilEnhet) {
         String veiledere = veiledereMedTilgangTilEnhet.stream().map(Object::toString).collect(Collectors.joining(",", "{", "}"));
-        whereStatement.add("(" + VEILEDERID + " IS NULL OR " + VEILEDERID + " <> ANY ('" + veiledere + "'::varchar[]))");
+        whereStatement.add("(" + VEILEDERID + " IS NULL OR " + VEILEDERID + " <> ALL ('" + veiledere + "'::varchar[]))");
     }
 
     public void nyForVeileder() {

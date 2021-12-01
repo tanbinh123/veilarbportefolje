@@ -99,8 +99,17 @@ public class PostgresServiceTest {
 
     @Test
     public void sok_resulterer_i_ingen_brukere() {
+        when(veilarbVeilederClient.hentVeilederePaaEnhet(any())).thenReturn(List.of("Z12345", "Z12346"));
+
+        lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), null);
+        lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"));
+        lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12346"));
+        lastOppBruker(randomFnr.get(3), randomAktorIds.get(3), VeilederId.of("Z12346"));
+
         Filtervalg filtervalg = new Filtervalg().setFerdigfilterListe(List.of(UFORDELTE_BRUKERE));
-        postgresService.hentBrukere("1234", null, null, null, filtervalg, 0, 10);
+        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, null, null, filtervalg, 0, 10);
+        assertThat(brukereMedAntall.getAntall()).isEqualTo(1);
+        assertThat(brukereMedAntall.getBrukere().get(0).getFnr().equals(randomFnr.get(0).toString()));
     }
 
 
@@ -109,14 +118,14 @@ public class PostgresServiceTest {
         Filtervalg filtervalg = new Filtervalg().setUtdanning(List.of(UtdanningSvar.GRUNNSKOLE))
                 .setUtdanningGodkjent(List.of(UtdanningGodkjentSvar.JA))
                 .setUtdanningBestatt(List.of(UtdanningBestattSvar.JA));
-        postgresService.hentBrukere("1234", null, null, null, filtervalg, 0, 10);
+        postgresService.hentBrukere(enhetId, null, null, null, filtervalg, 0, 10);
     }
 
 
     @Test
     public void sok_pa_situasjon() {
         Filtervalg filtervalg = new Filtervalg().setRegistreringstype(List.of(DinSituasjonSvar.MISTET_JOBBEN));
-        postgresService.hentBrukere("1234", null, null, null, filtervalg, 0, 10);
+        postgresService.hentBrukere(enhetId, null, null, null, filtervalg, 0, 10);
     }
 
 
@@ -124,22 +133,20 @@ public class PostgresServiceTest {
     public void sok_pa_tekst() {
         Filtervalg teskt = new Filtervalg().setNavnEllerFnrQuery("test");
         Filtervalg fnr = new Filtervalg().setNavnEllerFnrQuery("123");
-        postgresService.hentBrukere("1234", null, null, null, teskt, 0, 10);
-        postgresService.hentBrukere("1234", null, null, null, fnr, 0, 10);
+        postgresService.hentBrukere(enhetId, null, null, null, teskt, 0, 10);
+        postgresService.hentBrukere(enhetId, null, null, null, fnr, 0, 10);
     }
 
     @Test
     public void sok_pa_arbeidslista() {
-        AktorId aktorId = randomAktorIds.get(0);
-        Fnr fnr = randomFnr.get(0);
-        lastOppBruker(fnr, aktorId, VeilederId.of("Z12345"));
+        lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"));
 
         Filtervalg filtervalg = new Filtervalg().setFerdigfilterListe(List.of(MIN_ARBEIDSLISTE));
         BrukereMedAntall brukereMedAntall_pre = postgresService.hentBrukere(enhetId, null, null, null, filtervalg, 0, 10);
         assertThat(brukereMedAntall_pre.getAntall()).isEqualTo(0);
 
-        arbeidslisteRepositoryV2.insertArbeidsliste(new ArbeidslisteDTO(fnr)
-                .setAktorId(aktorId)
+        arbeidslisteRepositoryV2.insertArbeidsliste(new ArbeidslisteDTO(randomFnr.get(0))
+                .setAktorId(randomAktorIds.get(0))
                 .setVeilederId(VeilederId.of("X11111"))
                 .setFrist(Timestamp.from(Instant.parse("2017-10-11T00:00:00Z")))
                 .setKommentar("Dette er en kommentar")
@@ -300,7 +307,9 @@ public class PostgresServiceTest {
 
     private void lastOppBruker(Fnr fnr, AktorId aktorId, VeilederId veilederId) {
         oppfolgingRepositoryV2.settUnderOppfolging(aktorId, ZonedDateTime.now());
-        oppfolgingRepositoryV2.settVeileder(aktorId, veilederId);
+        if (veilederId != null) {
+            oppfolgingRepositoryV2.settVeileder(aktorId, veilederId);
+        }
         oppfolginsbrukerRepositoryV2.leggTilEllerEndreOppfolgingsbruker(
                 new OppfolgingsbrukerEntity(aktorId.get(), fnr.get(), null, null, "Testerson", "Testerson",
                         enhetId, null, null, null, null,
