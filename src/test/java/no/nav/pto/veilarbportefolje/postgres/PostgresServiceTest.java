@@ -248,17 +248,43 @@ public class PostgresServiceTest {
     @Test
     public void sok_pa_tiltaksTyper_og_iavtaltAktivitet() {
         lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"));
+        leggTilTiltak(randomAktorIds.get(0), randomPersonId.get(0), "GRUPPEAMO", "2021-10-21 00:00:00", "2022-01-19 23:59:00");
+        leggTilAktivitet(randomAktorIds.get(0), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+
+        lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"));
+        leggTilTiltak(randomAktorIds.get(1), randomPersonId.get(1), "GRUPPEAMO", "2021-10-21 00:00:00", "2022-01-19 23:59:00");
+        leggTilAktivitet(randomAktorIds.get(1), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+
+        lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12345"));
+        leggTilTiltak(randomAktorIds.get(2), randomPersonId.get(2), "INDOPPFAG", "2021-10-21 00:00:00", "2022-01-19 23:59:00");
+        leggTilTiltak(randomAktorIds.get(2), randomPersonId.get(2), "INKLUTILS", "2021-10-22 00:00:00", "2021-11-22 00:00:00");
+        leggTilAktivitet(randomAktorIds.get(2), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
 
         Filtervalg filtervalg = new Filtervalg().setTiltakstyper(List.of("INDOPPFAG", "NETTAMO")).setFerdigfilterListe(List.of(I_AVTALT_AKTIVITET));
         BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", "iavtaltaktivitet", filtervalg, 0, 10);
+        Assert.assertEquals(1, brukereMedAntall.getBrukere().size());
+        Assert.assertEquals(brukereMedAntall.getBrukere().get(0).getFnr(), randomFnr.get(2).get());
     }
 
     @Test
     public void sok_pa_aktiviteterForenklet() {
         lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"));
+        leggTilAktivitet(randomAktorIds.get(0), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+
+        lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"));
+        leggTilAktivitet(randomAktorIds.get(1), "stilling_fra_nav", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitet(randomAktorIds.get(1), "sokeavtale", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+
+        lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12345"));
+        leggTilAktivitet(randomAktorIds.get(2), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitet(randomAktorIds.get(2), "utdanningaktivitet", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitet(randomAktorIds.get(2), "sokeavtale", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
 
         Filtervalg filtervalg = new Filtervalg().setAktiviteterForenklet(List.of("SOKEAVTALE", "STILLING"));
         BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", "", filtervalg, 0, 10);
+        Assert.assertEquals(2, brukereMedAntall.getBrukere().size());
+        Assert.assertTrue(brukereMedAntall.getBrukere().stream().anyMatch(x -> x.getFnr().equals(randomFnr.get(1).toString())));
+        Assert.assertTrue(brukereMedAntall.getBrukere().stream().anyMatch(x -> x.getFnr().equals(randomFnr.get(2).toString())));
     }
 
     private void lastOppBruker(Fnr fnr, AktorId aktorId, VeilederId veilederId) {

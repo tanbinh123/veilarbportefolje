@@ -229,7 +229,7 @@ public class PostgresQueryBuilder {
 
     public void aktiviteterForenkletFilter(List<String> aktiviteterForenklet) {
         String tableAlias = "aktivt";
-        String aktiviteterSql = aktiviteterForenklet.stream().map(x -> "'" + x + "'").collect(Collectors.joining(","));
+        String aktiviteterSql = aktiviteterForenklet.stream().map(x -> "'" + x.toLowerCase() + "'").collect(Collectors.joining(","));
         joinedTables.add("LATERAL (SELECT " + PostgresTable.AKTIVITETTYPE_STATUS.AKTOERID + ", MIN(" + PostgresTable.AKTIVITETTYPE_STATUS.NESTE_UTLOPSDATO + ") as NESTE_UTLOPSDATO FROM " + PostgresTable.AKTIVITETTYPE_STATUS.TABLE_NAME + " atb WHERE atb.AKTOERID = " + getKeyColumn() + " AND " + PostgresTable.AKTIVITETTYPE_STATUS.AKTIVITETTYPE + " IN (" + aktiviteterSql + ") AND aktiv GROUP BY AKTOERID) as " + tableAlias);
         columns.add(tableAlias + ".NESTE_UTLOPSDATO");
     }
