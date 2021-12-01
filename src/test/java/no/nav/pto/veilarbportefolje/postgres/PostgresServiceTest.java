@@ -28,7 +28,7 @@ import no.nav.pto.veilarbportefolje.oppfolgingsbruker.OppfolginsbrukerRepository
 import no.nav.pto.veilarbportefolje.registrering.DinSituasjonSvar;
 import no.nav.pto.veilarbportefolje.util.VedtakstottePilotRequest;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -69,6 +69,8 @@ public class PostgresServiceTest {
     private final List<Fnr> fixedFnr = List.of(Fnr.of("01091964488"), Fnr.of("09118714501"), Fnr.of("22098817732"));
     private final List<PersonId> randomPersonId = List.of(getRandomPersonId(), getRandomPersonId(), getRandomPersonId(), getRandomPersonId());
 
+    private final JdbcTemplate db;
+
     @Autowired
     public PostgresServiceTest(@Qualifier("PostgresJdbc") JdbcTemplate db, DialogRepositoryV2 dialogRepositoryV2, OppfolgingRepositoryV2 oppfolgingRepositoryV2, OppfolginsbrukerRepositoryV2 oppfolginsbrukerRepositoryV2, ArbeidslisteRepositoryV2 arbeidslisteRepositoryV2, AktivitetStatusRepositoryV2 aktivitetStatusRepositoryV2, TiltakRepositoryV3 tiltakRepositoryV3) {
         this.dialogRepositoryV2 = dialogRepositoryV2;
@@ -82,11 +84,17 @@ public class PostgresServiceTest {
 
         when(veilarbVeilederClient.hentVeilederePaaEnhet(any())).thenReturn(List.of("Z12345", "Z12346"));
         postgresService = new PostgresService(vedtakstottePilotRequest, db, veilarbVeilederClient);
+
+        this.db = db;
     }
 
-    @Before
-    void setUp() {
-        randomAktorIds.stream().forEach(aktorId -> oppfolgingRepositoryV2.settOppfolgingTilFalse(aktorId));
+    @BeforeEach
+    public void setUp() {
+        db.execute("truncate table oppfolging_data");
+        db.execute("truncate table aktivitettype_status_for_bruker");
+        db.execute("truncate table aktiviteter");
+        db.execute("truncate table aktivitet_status_for_bruker");
+        db.execute("truncate table brukertiltak");
     }
 
     @Test
@@ -147,7 +155,7 @@ public class PostgresServiceTest {
     public void skal_filtrere_pa_kjonn() {
         when(veilarbVeilederClient.hentVeilederePaaEnhet(any())).thenReturn(List.of("Z12345", "Z12346"));
         lastOppBruker(fixedFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345")); // Kvinne
-        lastOppBruker(fixedFnr.get(2), randomAktorIds.get(1), VeilederId.of("Z12346")); // Mann
+        lastOppBruker(fixedFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12346")); // Mann
 
         Filtervalg filtervalg_kvinne = new Filtervalg().setFerdigfilterListe(List.of()).setKjonn(Kjonn.K);
         Filtervalg filtervalg_mann = new Filtervalg().setFerdigfilterListe(List.of()).setKjonn(Kjonn.M);
@@ -238,6 +246,9 @@ public class PostgresServiceTest {
         lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"));
         leggTilTiltak(randomAktorIds.get(1), randomPersonId.get(1), "GRUPPEAMO", "2021-10-21 00:00:00", "2022-01-19 23:59:00");
 
+        lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12345"));
+        leggTilTiltak(randomAktorIds.get(2), randomPersonId.get(2), "INKLUTILS", "2021-10-21 00:00:00", "2022-01-19 23:59:00");
+
 
         Filtervalg filtervalg = new Filtervalg().setTiltakstyper(List.of("INDOPPFAG", "NETTAMO"));
         BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", null, filtervalg, 0, 10);
@@ -261,7 +272,7 @@ public class PostgresServiceTest {
         leggTilAktivitet(randomAktorIds.get(2), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
 
         Filtervalg filtervalg = new Filtervalg().setTiltakstyper(List.of("INDOPPFAG", "NETTAMO")).setFerdigfilterListe(List.of(I_AVTALT_AKTIVITET));
-        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", "iavtaltaktivitet", filtervalg, 0, 10);
+        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", null, filtervalg, 0, 10);
         Assert.assertEquals(1, brukereMedAntall.getBrukere().size());
         Assert.assertEquals(brukereMedAntall.getBrukere().get(0).getFnr(), randomFnr.get(2).get());
     }
