@@ -18,6 +18,7 @@ import no.nav.pto.veilarbportefolje.client.VeilarbVeilederClient;
 import no.nav.pto.veilarbportefolje.config.ApplicationConfigTest;
 import no.nav.pto.veilarbportefolje.dialog.DialogRepositoryV2;
 import no.nav.pto.veilarbportefolje.dialog.Dialogdata;
+import no.nav.pto.veilarbportefolje.domene.Brukerdata;
 import no.nav.pto.veilarbportefolje.domene.BrukereMedAntall;
 import no.nav.pto.veilarbportefolje.domene.Filtervalg;
 import no.nav.pto.veilarbportefolje.domene.Kjonn;
@@ -104,8 +105,6 @@ public class PostgresServiceTest {
 
     @Test
     public void sok_resulterer_i_ingen_brukere() {
-        when(veilarbVeilederClient.hentVeilederePaaEnhet(any())).thenReturn(List.of("Z12345", "Z12346"));
-
         lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), null, null, null);
         lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"), null, null);
         lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12346"), null, null);
@@ -115,6 +114,22 @@ public class PostgresServiceTest {
         BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, null, null, filtervalg, 0, 10);
         assertThat(brukereMedAntall.getAntall()).isEqualTo(1);
         assertThat(brukereMedAntall.getBrukere().get(0).getFnr().equals(randomFnr.get(0).toString()));
+    }
+
+    @Test
+    public void test_nye_brukere_for_veileder() {
+
+        lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), null, null, null);
+        lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"), null, null);
+        lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12345"), null, null);
+        lastOppBruker(randomFnr.get(3), randomAktorIds.get(3), VeilederId.of("Z12346"), null, null);
+
+        setNyForVeileder(randomAktorIds.get(1), true);
+
+        Filtervalg filtervalg = new Filtervalg().setFerdigfilterListe(List.of(NYE_BRUKERE_FOR_VEILEDER));
+        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, "Z12345", null, null, filtervalg, 0, 10);
+        assertThat(brukereMedAntall.getAntall()).isEqualTo(1);
+        assertThat(brukereMedAntall.getBrukere().get(0).getFnr().equals(randomFnr.get(1).toString()));
     }
 
 
@@ -204,7 +219,6 @@ public class PostgresServiceTest {
 
     @Test
     public void skal_filtrere_pa_kjonn() {
-        when(veilarbVeilederClient.hentVeilederePaaEnhet(any())).thenReturn(List.of("Z12345", "Z12346"));
         lastOppBruker(fixedFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"), null, null); // Kvinne
         lastOppBruker(fixedFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12346"), null, null); // Mann
 
@@ -223,7 +237,6 @@ public class PostgresServiceTest {
 
     @Test
     public void skal_filtrere_pa_alder() {
-        when(veilarbVeilederClient.hentVeilederePaaEnhet(any())).thenReturn(List.of("Z12345", "Z12346"));
         lastOppBruker(fixedFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"), null, null); // under_21
         lastOppBruker(fixedFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12346"), null, null); // Mann: 33
 
@@ -239,7 +252,6 @@ public class PostgresServiceTest {
 
     @Test
     public void skal_filtrere_pa_fodselsdag() {
-        when(veilarbVeilederClient.hentVeilederePaaEnhet(any())).thenReturn(List.of("Z12345", "Z12346"));
         lastOppBruker(fixedFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"), null, null); // 1 i maneden
         lastOppBruker(fixedFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12346"), null, null); // 9 i maneden
 
@@ -273,19 +285,82 @@ public class PostgresServiceTest {
     }
 
     @Test
+    public void test_venter_pa_svar_fra_nav() {
+        lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), null, null, null);
+        lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"), null, null);
+        lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12345"), null, null);
+        lastOppBruker(randomFnr.get(3), randomAktorIds.get(3), VeilederId.of("Z12346"), null, null);
+
+        dialogRepositoryV2.oppdaterDialogInfoForBruker(
+                new Dialogdata()
+                        .setAktorId(randomAktorIds.get(1).toString())
+                        .setSisteEndring(now())
+                        .setTidspunktEldsteUbehandlede(now()));
+        dialogRepositoryV2.oppdaterDialogInfoForBruker(
+                new Dialogdata()
+                        .setAktorId(randomAktorIds.get(3).toString())
+                        .setSisteEndring(now())
+                        .setTidspunktEldsteUbehandlede(now()));
+
+        Filtervalg filtervalg = new Filtervalg().setFerdigfilterListe(List.of(VENTER_PA_SVAR_FRA_NAV));
+        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, null, null, filtervalg, 0, 10);
+        assertThat(brukereMedAntall.getAntall()).isEqualTo(2);
+        assertThat(brukereMedAntall.getBrukere().stream().anyMatch(x -> x.getFnr().equals(randomFnr.get(1).toString())));
+        assertThat(brukereMedAntall.getBrukere().stream().anyMatch(x -> x.getFnr().equals(randomFnr.get(3).toString())));
+    }
+
+    @Test
     public void sok_pa_iavtaltAktivitet() {
         lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"), null, null);
-        leggTilAktivitet(randomAktorIds.get(0), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
-
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(0), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
 
         lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"), null, null);
-        leggTilAktivitet(randomAktorIds.get(1), "behandling", toTimestamp(now()), toTimestamp(now()), false);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(1), "behandling", toTimestamp(now()), toTimestamp(now()), false);
 
         Filtervalg filtervalg = new Filtervalg().setFerdigfilterListe(List.of(I_AVTALT_AKTIVITET));
         BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", "iavtaltaktivitet", filtervalg, 0, 10);
         Assert.assertTrue(brukereMedAntall.getBrukere().size() == 1);
         Assert.assertFalse(brukereMedAntall.getBrukere().get(0).getFnr().equals(randomFnr.get(0)));
         Assert.assertFalse(brukereMedAntall.getBrukere().get(0).getAktiviteter().isEmpty());
+    }
+
+    @Test
+    public void sok_pa_ikke_iavtaltAktivitet() {
+        lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"), null, null);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(0), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+
+        lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"), null, null);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(1), "behandling", toTimestamp(now()), toTimestamp(now()), false);
+
+        lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12345"), null, null);
+        lastOppBruker(randomFnr.get(3), randomAktorIds.get(3), VeilederId.of("Z12345"), null, null);
+
+        Filtervalg filtervalg = new Filtervalg().setFerdigfilterListe(List.of(IKKE_I_AVTALT_AKTIVITET));
+        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", null, filtervalg, 0, 10);
+        Assert.assertTrue(brukereMedAntall.getBrukere().size() == 3);
+        Assert.assertTrue(brukereMedAntall.getBrukere().stream().anyMatch(x -> x.getFnr().equals(randomFnr.get(1).toString())));
+        Assert.assertTrue(brukereMedAntall.getBrukere().stream().anyMatch(x -> x.getFnr().equals(randomFnr.get(2).toString())));
+        Assert.assertTrue(brukereMedAntall.getBrukere().stream().anyMatch(x -> x.getFnr().equals(randomFnr.get(3).toString())));
+    }
+
+    @Test
+    public void sok_pa_utlopte_aktiviteter() {
+        lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"), null, null);
+        leggTilAktivitetStatusForBruker(randomAktorIds.get(0), toTimestamp(now().minusDays(2l)), toTimestamp(now()), toTimestamp(now()), toTimestamp(now()));
+
+        lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12346"), null, null);
+        leggTilAktivitetStatusForBruker(randomAktorIds.get(1), null, toTimestamp(now()), toTimestamp(now()), toTimestamp(now()));
+
+        lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12345"), null, null);
+        leggTilAktivitetStatusForBruker(randomAktorIds.get(2), toTimestamp(now().minusDays(2)), toTimestamp(now().minusDays(3)), toTimestamp(now()), toTimestamp(now()));
+
+        lastOppBruker(randomFnr.get(3), randomAktorIds.get(3), VeilederId.of("Z12346"), null, null);
+
+        Filtervalg filtervalg = new Filtervalg().setFerdigfilterListe(List.of(UTLOPTE_AKTIVITETER));
+        BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", null, filtervalg, 0, 10);
+        Assert.assertTrue(brukereMedAntall.getBrukere().size() == 2);
+        Assert.assertTrue(brukereMedAntall.getBrukere().stream().anyMatch(x -> x.getFnr().equals(randomFnr.get(0).toString())));
+        Assert.assertTrue(brukereMedAntall.getBrukere().stream().anyMatch(x -> x.getFnr().equals(randomFnr.get(2).toString())));
     }
 
     @Test
@@ -311,16 +386,16 @@ public class PostgresServiceTest {
     public void sok_pa_tiltaksTyper_og_iavtaltAktivitet() {
         lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"), null, null);
         leggTilTiltak(randomAktorIds.get(0), randomPersonId.get(0), "GRUPPEAMO", "2021-10-21 00:00:00", "2022-01-19 23:59:00");
-        leggTilAktivitet(randomAktorIds.get(0), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(0), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
 
         lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"), null, null);
         leggTilTiltak(randomAktorIds.get(1), randomPersonId.get(1), "GRUPPEAMO", "2021-10-21 00:00:00", "2022-01-19 23:59:00");
-        leggTilAktivitet(randomAktorIds.get(1), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(1), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
 
         lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12345"), null, null);
         leggTilTiltak(randomAktorIds.get(2), randomPersonId.get(2), "INDOPPFAG", "2021-10-21 00:00:00", "2022-01-19 23:59:00");
         leggTilTiltak(randomAktorIds.get(2), randomPersonId.get(2), "INKLUTILS", "2021-10-22 00:00:00", "2021-11-22 00:00:00");
-        leggTilAktivitet(randomAktorIds.get(2), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(2), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
 
         Filtervalg filtervalg = new Filtervalg().setTiltakstyper(List.of("INDOPPFAG", "NETTAMO")).setFerdigfilterListe(List.of(I_AVTALT_AKTIVITET));
         BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", null, filtervalg, 0, 10);
@@ -331,16 +406,16 @@ public class PostgresServiceTest {
     @Test
     public void sok_pa_aktiviteterForenklet() {
         lastOppBruker(randomFnr.get(0), randomAktorIds.get(0), VeilederId.of("Z12345"), null, null);
-        leggTilAktivitet(randomAktorIds.get(0), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(0), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
 
         lastOppBruker(randomFnr.get(1), randomAktorIds.get(1), VeilederId.of("Z12345"), null, null);
-        leggTilAktivitet(randomAktorIds.get(1), "stilling_fra_nav", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
-        leggTilAktivitet(randomAktorIds.get(1), "sokeavtale", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(1), "stilling_fra_nav", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(1), "sokeavtale", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
 
         lastOppBruker(randomFnr.get(2), randomAktorIds.get(2), VeilederId.of("Z12345"), null, null);
-        leggTilAktivitet(randomAktorIds.get(2), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
-        leggTilAktivitet(randomAktorIds.get(2), "utdanningaktivitet", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
-        leggTilAktivitet(randomAktorIds.get(2), "sokeavtale", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(2), "behandling", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(2), "utdanningaktivitet", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
+        leggTilAktivitetTypeStatusForBruker(randomAktorIds.get(2), "sokeavtale", toTimestamp(now().plusHours(2l)), toTimestamp(now().plusDays(1l)), true);
 
         Filtervalg filtervalg = new Filtervalg().setAktiviteterForenklet(List.of("SOKEAVTALE", "STILLING"));
         BrukereMedAntall brukereMedAntall = postgresService.hentBrukere(enhetId, null, "descending", "", filtervalg, 0, 10);
@@ -366,7 +441,11 @@ public class PostgresServiceTest {
                         null, true, true, false, null, ZonedDateTime.now()));
     }
 
-    private void leggTilAktivitet(AktorId aktorId, String aktivitetetType, Timestamp nesteUtlop, Timestamp nesteStart, boolean erAktiv) {
+    private void setNyForVeileder(AktorId aktorId, boolean brukerErNyForVeileder) {
+        oppfolgingRepositoryV2.settNyForVeileder(aktorId, brukerErNyForVeileder);
+    }
+
+    private void leggTilAktivitetTypeStatusForBruker(AktorId aktorId, String aktivitetetType, Timestamp nesteUtlop, Timestamp nesteStart, boolean erAktiv) {
         aktivitetStatusRepositoryV2.upsertAktivitetTypeStatus(new AktivitetStatus()
                         .setAktoerid(aktorId)
                         .setAktivitetType(aktivitetetType)
@@ -374,6 +453,15 @@ public class PostgresServiceTest {
                         .setNesteUtlop(nesteUtlop)
                         .setNesteStart(nesteStart)
                 , aktivitetetType);
+    }
+
+    private void leggTilAktivitetStatusForBruker(AktorId aktorId, Timestamp nyesteUtlopteAktivitet, Timestamp forrigeAktivitetStart, Timestamp aktivitetStart, Timestamp nesteAktivitetStart) {
+        aktivitetStatusRepositoryV2.upsertAktivitetStatus(new Brukerdata()
+                .setAktoerid(aktorId.get())
+                .setNyesteUtlopteAktivitet(nyesteUtlopteAktivitet)
+                .setForrigeAktivitetStart(forrigeAktivitetStart)
+                .setAktivitetStart(aktivitetStart)
+                .setNesteAktivitetStart(nesteAktivitetStart));
     }
 
     private void leggTilTiltak(AktorId aktorId, PersonId personId, String tiltaksType, String fraDato, String tilDato) {
