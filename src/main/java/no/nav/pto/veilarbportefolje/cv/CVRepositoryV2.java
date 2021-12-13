@@ -9,10 +9,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
 
 import static java.time.Instant.now;
-import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_CV.*;
+import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_CV.AKTOERID;
+import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_CV.CV_EKSISTERER;
+import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_CV.HAR_DELT_CV;
+import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_CV.SISTE_MELDING_MOTTATT;
+import static no.nav.pto.veilarbportefolje.database.PostgresTable.BRUKER_CV.TABLE_NAME;
 import static no.nav.pto.veilarbportefolje.postgres.PostgresUtils.queryForObjectOrNull;
 
 @Slf4j
@@ -76,9 +81,8 @@ public class CVRepositoryV2 {
         return db.update(updateSql, false, aktoerId.get());
     }
 
-    public int slettCVData(AktorId aktoerId) {
-        log.info("Slett CV for bruker: {}", aktoerId.get());
-        return db.update(String.format("DELETE FROM %s WHERE %s = ?", TABLE_NAME, AKTOERID), aktoerId.get());
+    public List<AktorId> hentAlleBrukereMedCvData() {
+        return db.queryForList("SELECT DISTINCT aktoerid FROM bruker_cv", AktorId.class);
     }
 
 }

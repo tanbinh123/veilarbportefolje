@@ -11,6 +11,8 @@ import no.nav.pto.veilarbportefolje.kafka.KafkaCommonConsumerService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 import static no.nav.pto.veilarbportefolje.cv.dto.Ressurs.CV_HJEMMEL;
 
 
@@ -57,6 +59,27 @@ public class CVService extends KafkaCommonConsumerService<Melding> {
         cvRepository.upsertHarDeltCv(aktoerId, harDeltCv);
 
         elasticServiceV2.updateHarDeltCv(aktoerId, harDeltCv);
+    }
+
+    public void migrerTilPostgres() {
+        List<AktorId> alleBrukereMedCvData = cvRepository.hentAlleBrukereMedCvData();
+        log.info("Migrering av CV for {} brukere.", alleBrukereMedCvData.size());
+        alleBrukereMedCvData.forEach(bruker -> {
+                    try {
+                        Boolean deltCv = cvRepository.harDeltCv(bruker);
+                        Boolean cvEksisterer = cvRepository.harCvEksisterer(bruker);
+
+                        cvRepositoryV2.upsertCVEksisterer(bruker, cvEksisterer);
+                        cvRepositoryV2.upsertHarDeltCv(bruker, deltCv);
+                    } catch (Exception e) {
+                        log.error("Migrering feilet på bruker: {}", bruker, e);
+                    }
+                }
+        );
+
+        int brukereMedCvData = cvRepository.hentAlleBrukereMedCvData().size();
+        int brukereMedCvDataPostgres = cvRepositoryV2.hentAlleBrukereMedCvData().size();
+        log.info("Migrering av CV data er ferdig. Brukere i oracle: {}, i Postgres: {}", brukereMedCvData, brukereMedCvDataPostgres);
     }
 
     private boolean cvEksistere(Melding melding) {
