@@ -17,7 +17,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.sql.Timestamp;
 
@@ -29,7 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes = ApplicationConfigTest.class)
+@SpringBootTest
+@ActiveProfiles("test")
+@Import(ApplicationConfigTest.class)
 class ArbeidslisteServiceTest {
 
     private final ArbeidslisteService arbeidslisteService;

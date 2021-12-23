@@ -19,7 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -32,7 +34,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 
 
-@SpringBootTest(classes = ApplicationConfigTest.class)
+@SpringBootTest
+@ActiveProfiles("test")
+@Import(ApplicationConfigTest.class)
 public class BrukerDataServiceTest {
     private final JdbcTemplate jdbcTemplate;
     private final BrukerDataService brukerDataService;

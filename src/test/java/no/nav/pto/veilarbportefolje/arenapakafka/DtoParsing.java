@@ -1,15 +1,24 @@
 package no.nav.pto.veilarbportefolje.arenapakafka;
 
-import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.*;
+import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.GruppeAktivitetDTO;
+import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.GruppeAktivitetInnhold;
+import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.UtdanningsAktivitetDTO;
+import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.UtdanningsAktivitetInnhold;
+import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.YtelsesDTO;
+import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.YtelsesInnhold;
 import no.nav.pto.veilarbportefolje.config.ApplicationConfigTest;
 import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import static no.nav.common.json.JsonUtils.fromJson;
 import static no.nav.pto.veilarbportefolje.util.TestUtil.readFileAsJsonString;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(classes = ApplicationConfigTest.class)
+@SpringBootTest
+@ActiveProfiles("test")
+@Import(ApplicationConfigTest.class)
 public class DtoParsing {
     @Test
     public void skal_bygge_korrekt_UtdanningsAktivitetInnhold_json() {

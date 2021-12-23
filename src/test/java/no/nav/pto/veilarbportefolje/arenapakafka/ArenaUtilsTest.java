@@ -7,11 +7,15 @@ import no.nav.pto.veilarbportefolje.util.SingletonPostgresContainer;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-@SpringBootTest(classes = ApplicationConfigTest.class)
+@SpringBootTest
+@ActiveProfiles("test")
+@Import(ApplicationConfigTest.class)
 public class ArenaUtilsTest {
     private JdbcTemplate db;
     private ArenaHendelseRepository arenaHendelseRepository;

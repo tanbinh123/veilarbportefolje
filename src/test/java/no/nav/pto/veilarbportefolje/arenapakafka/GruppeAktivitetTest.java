@@ -3,11 +3,15 @@ package no.nav.pto.veilarbportefolje.arenapakafka;
 import no.nav.common.types.identer.AktorId;
 import no.nav.common.types.identer.EnhetId;
 import no.nav.common.types.identer.Fnr;
-import no.nav.pto.veilarbportefolje.aktiviteter.*;
+import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetDAO;
+import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetStatus;
+import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetStatusRepositoryV2;
+import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetTyper;
 import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.GruppeAktivitetRepository;
 import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.GruppeAktivitetRepositoryV2;
 import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.GruppeAktivitetService;
-import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.*;
+import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.GruppeAktivitetDTO;
+import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.GruppeAktivitetInnhold;
 import no.nav.pto.veilarbportefolje.config.ApplicationConfigTest;
 import no.nav.pto.veilarbportefolje.database.BrukerDataService;
 import no.nav.pto.veilarbportefolje.database.Table;
@@ -21,7 +25,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +36,9 @@ import java.util.Set;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 
-@SpringBootTest(classes = ApplicationConfigTest.class)
+@SpringBootTest
+@ActiveProfiles("test")
+@Import(ApplicationConfigTest.class)
 public class GruppeAktivitetTest {
     private final GruppeAktivitetService gruppeAktivitetService;
     private final AktivitetStatusRepositoryV2 aktivitetStatusRepositoryV2;

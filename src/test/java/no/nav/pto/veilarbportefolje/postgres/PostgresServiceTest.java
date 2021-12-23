@@ -25,21 +25,27 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import static no.nav.pto.veilarbportefolje.domene.Brukerstatus.*;
+import static no.nav.pto.veilarbportefolje.domene.Brukerstatus.MIN_ARBEIDSLISTE;
+import static no.nav.pto.veilarbportefolje.domene.Brukerstatus.UFORDELTE_BRUKERE;
+import static no.nav.pto.veilarbportefolje.domene.Brukerstatus.VENTER_PA_SVAR_FRA_BRUKER;
 import static no.nav.pto.veilarbportefolje.util.DateUtils.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes = ApplicationConfigTest.class)
+@SpringBootTest
+@ActiveProfiles("test")
+@Import(ApplicationConfigTest.class)
 public class PostgresServiceTest {
     private final PostgresService postgresService;
     private final VeilarbVeilederClient veilarbVeilederClient;

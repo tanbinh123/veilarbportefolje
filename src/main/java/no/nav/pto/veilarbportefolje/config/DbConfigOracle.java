@@ -8,6 +8,7 @@ import org.flywaydb.core.Flyway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -20,6 +21,7 @@ import static no.nav.common.utils.NaisUtils.getCredentials;
 import static no.nav.common.utils.NaisUtils.getFileContent;
 
 @Configuration
+@Profile("production")
 @EnableTransactionManagement
 public class DbConfigOracle implements DatabaseConfig {
     private final String oracleURL;

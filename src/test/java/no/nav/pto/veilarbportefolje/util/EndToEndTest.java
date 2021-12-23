@@ -12,13 +12,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 
-@SpringBootTest(classes = ApplicationConfigTest.class)
+@ActiveProfiles("test")
+@Import(ApplicationConfigTest.class)
+@SpringBootTest
 public abstract class EndToEndTest {
 
     @Autowired

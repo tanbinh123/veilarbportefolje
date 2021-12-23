@@ -9,6 +9,7 @@ import no.nav.pto.veilarbportefolje.elastic.ElasticHealthCheck;
 import no.nav.pto.veilarbportefolje.service.UnleashService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import static no.nav.pto.veilarbportefolje.config.DbConfigOracle.dbPinger;
 import static no.nav.pto.veilarbportefolje.elastic.ElasticHealthCheck.FORVENTET_MINIMUM_ANTALL_DOKUMENTER;
 
 @Configuration
+@Profile("production")
 public class HelsesjekkConfig {
 
     @Bean

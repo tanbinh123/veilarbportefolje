@@ -1,7 +1,7 @@
 package no.nav.pto.veilarbportefolje.database;
 
-import no.nav.pto.veilarbportefolje.config.ApplicationConfigTest;
 import no.nav.common.types.identer.Fnr;
+import no.nav.pto.veilarbportefolje.config.ApplicationConfigTest;
 import no.nav.pto.veilarbportefolje.domene.Personinfo;
 import no.nav.pto.veilarbportefolje.persononinfo.PersonRepository;
 import no.nav.pto.veilarbportefolje.util.TestDataUtils;
@@ -9,14 +9,18 @@ import no.nav.sbl.sql.SqlUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-@SpringBootTest(classes = ApplicationConfigTest.class)
+@SpringBootTest
+@ActiveProfiles("test")
+@Import(ApplicationConfigTest.class)
 class PersonRepositoryTest {
 
     private final PersonRepository personRepository;

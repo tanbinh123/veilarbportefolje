@@ -6,6 +6,8 @@ import no.nav.pto.veilarbportefolje.database.BrukerDataService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -15,7 +17,9 @@ import static java.util.concurrent.ThreadLocalRandom.current;
 import static no.nav.pto.veilarbportefolje.util.TestDataUtils.randomAktorId;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-@SpringBootTest(classes = ApplicationConfigTest.class)
+@SpringBootTest
+@ActiveProfiles("test")
+@Import(ApplicationConfigTest.class)
 public class AktiviteterV2Test {
     private final AktivitetStatusRepositoryV2 aktivitetStatusRepositoryV2;
     private final AktiviteterRepositoryV2 aktiviteterRepositoryV2;

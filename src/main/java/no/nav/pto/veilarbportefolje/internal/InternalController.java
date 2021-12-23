@@ -9,6 +9,7 @@ import no.nav.common.health.selftest.SelftestHtmlGenerator;
 import no.nav.common.metrics.Event;
 import no.nav.common.metrics.MetricsClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,12 +26,13 @@ import java.util.List;
 import static no.nav.common.health.selftest.SelfTestUtils.checkAllParallel;
 
 @RestController
+@Profile("production")
 @RequestMapping("/internal")
 public class InternalController {
 
     private final SelfTestChecks selfTestChecks;
     private final JdbcTemplate db;
-    private MetricsClient metricsClient;
+    private final MetricsClient metricsClient;
 
     @Autowired
     public InternalController(SelfTestChecks selfTestChecks, JdbcTemplate db, MetricsClient metricsClient) {

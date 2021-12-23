@@ -32,4 +32,5 @@ public class EnvironmentProperties {
     private String elasticUri;
     private String elasticUsername;
     private String elasticPassword;
+    private String kafkaBrokersUrl;
 }

@@ -14,7 +14,6 @@ import no.nav.common.kafka.consumer.util.KafkaConsumerClientBuilder;
 import no.nav.common.kafka.consumer.util.deserializer.Deserializers;
 import no.nav.common.kafka.spring.PostgresJdbcTemplateConsumerRepository;
 import no.nav.common.utils.Credentials;
-import no.nav.common.utils.EnvironmentUtils;
 import no.nav.pto.veilarbportefolje.aktiviteter.AktivitetService;
 import no.nav.pto.veilarbportefolje.aktiviteter.KafkaAktivitetMelding;
 import no.nav.pto.veilarbportefolje.arenapakafka.aktiviteter.GruppeAktivitetService;
@@ -26,6 +25,7 @@ import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.UtdanningsAktivitetDTO
 import no.nav.pto.veilarbportefolje.arenapakafka.arenaDTO.YtelsesDTO;
 import no.nav.pto.veilarbportefolje.arenapakafka.ytelser.TypeKafkaYtelse;
 import no.nav.pto.veilarbportefolje.arenapakafka.ytelser.YtelsesService;
+import no.nav.pto.veilarbportefolje.config.EnvironmentProperties;
 import no.nav.pto.veilarbportefolje.cv.CVService;
 import no.nav.pto.veilarbportefolje.cv.dto.CVMelding;
 import no.nav.pto.veilarbportefolje.dialog.DialogService;
@@ -58,6 +58,7 @@ import no.nav.pto.veilarbportefolje.vedtakstotte.VedtakService;
 import no.nav.pto_schema.kafka.json.topic.onprem.EndringPaaOppfoelgingsBrukerV2;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.annotation.PostConstruct;
@@ -70,15 +71,12 @@ import static no.nav.common.kafka.consumer.util.ConsumerUtils.findConsumerConfig
 import static no.nav.common.kafka.util.KafkaPropertiesPreset.aivenDefaultConsumerProperties;
 import static no.nav.common.kafka.util.KafkaPropertiesPreset.onPremDefaultConsumerProperties;
 import static no.nav.common.utils.EnvironmentUtils.isDevelopment;
-import static no.nav.common.utils.NaisUtils.getCredentials;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
 
 @Configuration
+@Profile("production")
 public class KafkaConfigCommon {
     public final static String CLIENT_ID_CONFIG = "veilarbportefolje-consumer";
-    public static final String KAFKA_BROKERS = EnvironmentUtils.getRequiredProperty("KAFKA_BROKERS_URL");
-    private static final Credentials serviceUserCredentials = getCredentials("service_user");
-    private static final String KAFKA_SCHEMAS_URL = EnvironmentUtils.getRequiredProperty("KAFKA_SCHEMAS_URL");
 
     public enum Topic {
         VEDTAK_STATUS_ENDRING_TOPIC("aapen-oppfolging-vedtakStatusEndring-v1-" + requireKafkaTopicPostfix()),
@@ -118,7 +116,8 @@ public class KafkaConfigCommon {
     private final List<KafkaConsumerClient> consumerClientsOnPrem;
     private final KafkaConsumerRecordProcessor consumerRecordProcessor;
 
-    public KafkaConfigCommon(CVService cvService,
+    public KafkaConfigCommon(EnvironmentProperties environmentProperties, Credentials serviceUserCredentials,
+                             CVService cvService,
                              SistLestService sistLestService, RegistreringService registreringService,
                              ProfileringService profileringService, AktivitetService aktivitetService,
                              VedtakService vedtakService, DialogService dialogService, OppfolgingStartetService oppfolgingStartetService,
@@ -373,7 +372,7 @@ public class KafkaConfigCommon {
                         KafkaConsumerClientBuilder.builder()
                                 .withProperties(onPremDefaultConsumerProperties(
                                         CLIENT_ID_CONFIG,
-                                        KAFKA_BROKERS,
+                                        environmentProperties.getKafkaBrokersUrl(),
                                         serviceUserCredentials)
                                 )
                                 .withTopicConfig(config)

@@ -19,6 +19,7 @@ import no.nav.pto.veilarbportefolje.service.UnleashService;
 import no.nav.pto.veilarbportefolje.util.VedtakstottePilotRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.net.http.HttpClient;
 
@@ -29,6 +30,7 @@ import static no.nav.pto.veilarbportefolje.config.ApplicationConfig.APPLICATION_
 
 
 @Configuration
+@Profile("production")
 public class ClientConfig {
 
     @Bean

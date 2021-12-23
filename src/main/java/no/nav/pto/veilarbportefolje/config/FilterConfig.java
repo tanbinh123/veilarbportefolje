@@ -10,15 +10,19 @@ import no.nav.common.rest.filter.SetStandardHttpHeadersFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.util.List;
 
-import static no.nav.common.auth.Constants.*;
+import static no.nav.common.auth.Constants.AZURE_AD_ID_TOKEN_COOKIE_NAME;
+import static no.nav.common.auth.Constants.OPEN_AM_ID_TOKEN_COOKIE_NAME;
+import static no.nav.common.auth.Constants.REFRESH_TOKEN_COOKIE_NAME;
 import static no.nav.common.auth.oidc.filter.OidcAuthenticator.fromConfigs;
 import static no.nav.common.utils.EnvironmentUtils.isDevelopment;
 import static no.nav.common.utils.EnvironmentUtils.requireApplicationName;
 
 @Configuration
+@Profile("production")
 public class FilterConfig {
 
     private final List<String> ALLOWED_SERVICE_USERS = List.of(

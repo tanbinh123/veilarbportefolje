@@ -18,6 +18,7 @@ import no.nav.pto.veilarbportefolje.service.UnleashService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -28,6 +29,7 @@ import static no.nav.common.utils.NaisUtils.getCredentials;
 
 @EnableScheduling
 @Configuration
+@Profile("production")
 @EnableConfigurationProperties({EnvironmentProperties.class})
 public class ApplicationConfig {
 
